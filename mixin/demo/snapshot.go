@@ -31,3 +31,11 @@ func doReadTransfer(ctx context.Context, user *mixin.User, traceID string) {
 	}
 	printJSON("read transfer", snapshot)
 }
+
+func doReadExternal(ctx context.Context, user *mixin.User) {
+	snapshots, err := user.ReadExternal(ctx, "", "", "", "", time.Time{}, 10)
+	if err != nil {
+		log.Panicln(err)
+	}
+	printJSON("read snapshots", snapshots)
+}

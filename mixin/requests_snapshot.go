@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/fox-one/mixin-sdk/utils"
 )
 
 // ReadNetwork read network snapshots
@@ -74,4 +76,45 @@ func (user User) ReadTransfer(ctx context.Context, traceID string) (*Snapshot, *
 		return nil, resp.Error
 	}
 	return resp.Snapshot, nil
+}
+
+// ReadExternal read external snapshots
+func (user User) ReadExternal(ctx context.Context, assetID, publicKey, accountName, accountTag string, offset time.Time, limit int) ([]*PendingSnapshot, *Error) {
+	var paras = make([]string, 0, 12)
+	if len(assetID) > 0 {
+		paras = append(paras, "asset", assetID)
+	}
+	if len(publicKey) > 0 {
+		paras = append(paras, "public_key", publicKey)
+	} else if len(accountName) > 0 {
+		paras = append(paras, "account_name", accountName)
+		if len(accountName) > 0 {
+			paras = append(paras, "account_tag", accountTag)
+		}
+	}
+	if !offset.IsZero() {
+		paras = append(paras, "offset", offset.Format(time.RFC3339Nano))
+	}
+	if limit > 0 {
+		paras = append(paras, "limit", fmt.Sprint(limit))
+	}
+	uri, err := utils.BuildURL("/external/transactions", paras...)
+	if err != nil {
+		return nil, requestError(err)
+	}
+	data, err := user.Request(ctx, "GET", uri, nil)
+	if err != nil {
+		return nil, requestError(err)
+	}
+
+	var resp struct {
+		Snapshots []*PendingSnapshot `json:"data,omitempty"`
+		Error     *Error             `json:"error,omitempty"`
+	}
+	if err = json.Unmarshal(data, &resp); err != nil {
+		return nil, requestError(err)
+	} else if resp.Error != nil {
+		return nil, resp.Error
+	}
+	return resp.Snapshots, nil
 }

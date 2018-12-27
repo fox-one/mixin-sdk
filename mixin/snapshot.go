@@ -23,3 +23,11 @@ type Snapshot struct {
 
 	Asset *Asset `gorm:"-" json:"asset,omitempty"`
 }
+
+// PendingSnapshot pending snapshot
+type PendingSnapshot struct {
+	Snapshot
+
+	Confirmations int `json:"confirmations"`
+	Threshold     int `json:"threshold"`
+}

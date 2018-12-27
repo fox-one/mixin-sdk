@@ -56,4 +56,6 @@ func main() {
 	doReadSnapshot(ctx, u, snap.SnapshotID)
 
 	doReadTransfer(ctx, u, snap.TraceID)
+
+	doReadExternal(ctx, u)
 }

@@ -16,14 +16,10 @@ func (user User) CreateUser(ctx context.Context, privateKey *rsa.PrivateKey, ful
 		return nil, requestError(err)
 	}
 
-	paras := map[string]interface{}{
+	payload, err := json.Marshal(map[string]interface{}{
 		"session_secret": base64.StdEncoding.EncodeToString(pbts),
-	}
-	if len(fullname) > 0 {
-		paras["full_name"] = fullname
-	}
-
-	payload, err := json.Marshal(paras)
+		"full_name":      fullname,
+	})
 	if err != nil {
 		return nil, requestError(err)
 	}
