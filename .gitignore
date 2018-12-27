@@ -12,3 +12,4 @@
 *.out
 
 config.*.go
+mixin/demo/demo

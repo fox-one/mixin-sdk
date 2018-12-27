@@ -8,7 +8,7 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-func doTransfer(ctx context.Context, user *mixin.User, assetID, opponentID, amount, memo, pin string) string {
+func doTransfer(ctx context.Context, user *mixin.User, assetID, opponentID, amount, memo, pin string) *mixin.Snapshot {
 	snapshot, err := user.Transfer(ctx, &mixin.TransferInput{
 		TraceID:    uuid.Must(uuid.NewV4()).String(),
 		AssetID:    assetID,
@@ -20,10 +20,10 @@ func doTransfer(ctx context.Context, user *mixin.User, assetID, opponentID, amou
 		log.Panicln(err)
 	}
 	printJSON("do transfer", snapshot)
-	return snapshot.SnapshotID
+	return snapshot
 }
 
-func doWithdraw(ctx context.Context, user *mixin.User, assetID, publicKey, amount, memo, pin string) string {
+func doWithdraw(ctx context.Context, user *mixin.User, assetID, publicKey, amount, memo, pin string) *mixin.Snapshot {
 	addrID := doCreateAddress(ctx, user, assetID, publicKey, "Test Withdraw", pin)
 
 	snapshot, err := user.Withdraw(ctx, &mixin.TransferInput{
@@ -39,5 +39,5 @@ func doWithdraw(ctx context.Context, user *mixin.User, assetID, publicKey, amoun
 	printJSON("do withdraw", snapshot)
 
 	doDeleteAddress(ctx, user, addrID, pin)
-	return snapshot.SnapshotID
+	return snapshot
 }

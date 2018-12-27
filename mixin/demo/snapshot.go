@@ -16,16 +16,16 @@ func doReadNetwork(ctx context.Context, user *mixin.User) {
 	printJSON("read network", snapshots)
 }
 
-func doReadSnapshot(ctx context.Context, user *mixin.User) {
-	snapshot, err := user.ReadSnapshot(ctx, "cb329d89-def3-4ddc-b3eb-d5450199eff4")
+func doReadSnapshot(ctx context.Context, user *mixin.User, snapshotID string) {
+	snapshot, err := user.ReadSnapshot(ctx, snapshotID)
 	if err != nil {
 		log.Panicln(err)
 	}
 	printJSON("read snapshot", snapshot)
 }
 
-func doReadTransfer(ctx context.Context, user *mixin.User) {
-	snapshot, err := user.ReadTransfer(ctx, "01663326-4cfd-407a-997b-33f297c716e2")
+func doReadTransfer(ctx context.Context, user *mixin.User, traceID string) {
+	snapshot, err := user.ReadTransfer(ctx, traceID)
 	if err != nil {
 		log.Panicln(err)
 	}
