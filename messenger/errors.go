@@ -9,3 +9,11 @@ func requestError(err error) *mixin.Error {
 		Description: err.Error(),
 	}
 }
+
+func ServerError(err error) *mixin.Error {
+	return &mixin.Error{
+		Status:      2000000,
+		Code:        500,
+		Description: err.Error(),
+	}
+}
