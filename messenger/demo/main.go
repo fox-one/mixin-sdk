@@ -29,7 +29,7 @@ func (h Handler) OnMessage(ctx context.Context, msgView messenger.MessageView, u
 	if err != nil {
 		return err
 	}
-	msg := fmt.Sprintf("I got your message, it said: %s", string(data))
+	msg := fmt.Sprintf("I got your message, you said: %s", string(data))
 	log.Println(msg)
 
 	return h.SendPlainText(ctx, msgView, msg)
@@ -73,6 +73,6 @@ func main() {
 	go h.Run(ctx)
 	for {
 		h.Send(ctx, "7b3f0a95-3ee9-4c1b-8ae9-170e3877d909", "hello world")
-		time.Sleep(1 * time.Second)
+		time.Sleep(5 * time.Second)
 	}
 }
