@@ -12,10 +12,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/satori/go.uuid"
-
 	"github.com/fox-one/mixin-sdk/mixin"
 	"github.com/gorilla/websocket"
+	"github.com/satori/go.uuid"
 )
 
 const (
@@ -399,6 +398,7 @@ func parseMessage(ctx context.Context, mc *messageContext, wsReader io.Reader) e
 	if err = json.Unmarshal(data, &msg); err != nil {
 		return err
 	}
+
 	select {
 	case <-time.After(keepAlivePeriod):
 		return fmt.Errorf("timeout to handle %s %s", msg.Category, msg.MessageId)
