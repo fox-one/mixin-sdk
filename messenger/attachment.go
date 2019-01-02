@@ -1,58 +1,56 @@
 package messenger
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"net/http"
-	"time"
+
+	"github.com/fox-one/mixin-sdk/utils"
 
 	"github.com/fox-one/mixin-sdk/mixin"
 )
 
-var httpClient *http.Client
+// Attachment attachment
+type Attachment struct {
+	AttachmentID string `json:"attachment"`
+	UploadURL    string `json:"upload_url"`
+	ViewURL      string `json:"view_url"`
+}
 
-func (m Messenger) CreateAttachment(ctx context.Context) (string, string, string, error) {
+// CreateAttachment create attachment
+func (m Messenger) CreateAttachment(ctx context.Context) (*Attachment, error) {
 	data, err := m.Request(ctx, "POST", "/attachment", nil)
 	if err != nil {
-		return "", "", "", requestError(err)
+		return nil, requestError(err)
 	}
 
 	var resp struct {
-		Data struct {
-			AttachmentId string `json:"attachment"`
-			UploadUrl    string `json:"upload_url"`
-			ViewUrl      string `json:"view_url"`
-		} `json:"data"`
-		Error *mixin.Error `json:"error,omitempty"`
+		Attachment *Attachment  `json:"data"`
+		Error      *mixin.Error `json:"error,omitempty"`
 	}
 	if err = json.Unmarshal(data, &resp); err != nil {
-		return "", "", "", requestError(err)
+		return nil, requestError(err)
 	} else if resp.Error != nil {
-		return "", "", "", resp.Error
+		return nil, resp.Error
 	}
 
-	return resp.Data.AttachmentId, resp.Data.UploadUrl, resp.Data.ViewUrl, nil
+	return resp.Attachment, nil
 }
 
+// Upload upload files
 func (m Messenger) Upload(ctx context.Context, file []byte) (string, string, error) {
-	id, upload, view, err := m.CreateAttachment(ctx)
+	attachment, err := m.CreateAttachment(ctx)
 	if err != nil {
 		return "", "", err
 	}
 
-	req, err := http.NewRequest("PUT", upload, bytes.NewReader(file))
+	req, err := utils.NewRequest(attachment.UploadURL, "PUT", string(file), "x-amz-acl", "public-read")
 	if err != nil {
 		return "", "", err
 	}
-	req.Header.Set("x-amz-acl", "public-read")
 
-	if httpClient == nil {
-		httpClient = &http.Client{Timeout: 10 * time.Second}
-	}
-	_, err = httpClient.Do(req)
+	_, err = utils.DoRequest(req)
 	if err != nil {
 		return "", "", err
 	}
-	return id, view, nil
+	return attachment.AttachmentID, attachment.ViewURL, nil
 }
