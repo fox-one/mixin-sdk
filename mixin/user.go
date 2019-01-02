@@ -93,7 +93,7 @@ func (user *User) signPIN(pin string) (string, error) {
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
-func (user *User) signToken(method, uri string, body []byte) (string, error) {
+func (user *User) SignToken(method, uri string, body []byte) (string, error) {
 	expire := time.Now().UTC().Add(time.Hour * 24 * 30 * 3)
 	sum := sha256.Sum256(append([]byte(method+uri), body...))
 

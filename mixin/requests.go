@@ -31,7 +31,7 @@ func (user *User) RequestWithPIN(ctx context.Context, method, uri string, payloa
 
 // Request sign and request
 func (user *User) Request(ctx context.Context, method, uri string, payload []byte) ([]byte, error) {
-	accessToken, err := user.signToken(method, uri, payload)
+	accessToken, err := user.SignToken(method, uri, payload)
 	if err != nil {
 		return nil, err
 	}
