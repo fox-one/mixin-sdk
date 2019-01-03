@@ -43,10 +43,6 @@ func (user *User) Request(ctx context.Context, method, uri string, payload []byt
 	}
 
 	req = req.WithContext(ctx)
-	resp, err := utils.DoRequest(req)
-	if err != nil {
-		return nil, err
-	}
-
+	resp, _ := utils.DoRequest(req)
 	return utils.ReadResponse(resp)
 }
