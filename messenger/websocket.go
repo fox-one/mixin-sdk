@@ -344,7 +344,7 @@ func writeMessageAndWait(ctx context.Context, mc *messageContext, action string,
 	case t := <-resp:
 		if t.Error != nil && t.Error.Code != 403 {
 			//return writeMessageAndWait(ctx, mc, action, params)
-			return BlazeServerError(ctx, err)
+			return BlazeServerError(ctx, t.Error)
 		}
 	}
 	return nil
