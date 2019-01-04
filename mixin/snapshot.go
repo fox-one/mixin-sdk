@@ -28,6 +28,12 @@ type Snapshot struct {
 type PendingSnapshot struct {
 	Snapshot
 
+	TransactionID string `json:"transaction_id"`
+
+	PublicKey   string `json:"public_key"`
+	AccountName string `json:"account_name"`
+	AccountTag  string `json:"account_tag"`
+
 	Confirmations int `json:"confirmations"`
 	Threshold     int `json:"threshold"`
 }
