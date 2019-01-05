@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/fox-one/mixin-sdk/utils"
+	log "github.com/sirupsen/logrus"
 )
 
 var httpClient = &http.Client{}
@@ -41,6 +42,8 @@ func (user *User) Request(ctx context.Context, method, uri string, payload []byt
 	if err != nil {
 		return nil, err
 	}
+
+	log.Debugln("do request: ", uri)
 
 	req = req.WithContext(ctx)
 	resp, _ := utils.DoRequest(req)
