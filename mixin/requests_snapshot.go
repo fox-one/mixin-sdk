@@ -13,7 +13,7 @@ import (
 func (user User) ReadNetwork(ctx context.Context, assetID string, offset time.Time, order bool, limit uint) ([]*Snapshot, *Error) {
 	uri := fmt.Sprintf("/network/snapshots?limit=%d", limit)
 	if !offset.IsZero() {
-		uri = uri + "&offset=" + offset.Format(time.RFC3339Nano)
+		uri = uri + "&offset=" + offset.UTC().Format(time.RFC3339Nano)
 	}
 	if len(assetID) > 0 {
 		uri = uri + "&asset=" + assetID
