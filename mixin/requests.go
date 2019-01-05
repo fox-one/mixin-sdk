@@ -43,7 +43,7 @@ func (user *User) Request(ctx context.Context, method, uri string, payload []byt
 		return nil, err
 	}
 
-	log.Debugln("do request: ", uri)
+	log.Debugln("do request: ", method, uri)
 
 	req = req.WithContext(ctx)
 	resp, _ := utils.DoRequest(req)

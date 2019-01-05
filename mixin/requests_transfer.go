@@ -7,6 +7,7 @@ import (
 
 	"github.com/fox-one/mixin-sdk/utils"
 	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 )
 
 // TransferInput input for transfer/verify payment request
@@ -21,19 +22,30 @@ type TransferInput struct {
 
 func (input TransferInput) verify(snapshot Snapshot) bool {
 	mins := time.Now().Sub(snapshot.CreatedAt).Minutes()
-	if snapshot.AssetID == input.AssetID &&
-		snapshot.Data == input.Memo &&
-		mins > -10 && mins < 10 &&
-		(snapshot.OpponentID == input.OpponentID || len(input.OpponentID) == 0) {
-
-		iAmount, _ := decimal.NewFromString(input.Amount)
-		oAmount, _ := decimal.NewFromString(snapshot.Amount)
-		if iAmount.Add(oAmount).Round(8).IsZero() {
-			return true
+	if mins < -10 || mins > 10 {
+		log.Debugf("request send %d minutes ago\n", mins)
+		return false
+	}
+	if len(input.OpponentID) > 0 {
+		if snapshot.AssetID != input.AssetID {
+			log.Debugln("asset id doses not match", snapshot.AssetID, input.AssetID)
+			return false
+		}
+		if snapshot.Data != input.Memo {
+			log.Debugln("asset id doses not match", snapshot.AssetID, input.AssetID)
+			return false
 		}
 	}
 
-	return false
+	iAmount, _ := decimal.NewFromString(input.Amount)
+	oAmount, _ := decimal.NewFromString(snapshot.Amount)
+	diff := iAmount.Add(oAmount).Round(8)
+	if !diff.IsZero() {
+		log.Debugln("amount does not match", input.Amount, snapshot.Amount, diff.IsZero())
+		return false
+	}
+
+	return true
 }
 
 // VerifyPayment verify payment
