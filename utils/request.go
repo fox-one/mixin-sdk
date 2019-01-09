@@ -87,10 +87,11 @@ func DoRequest(request *http.Request) (*http.Response, error) {
 			Dial: func(network, addr string) (net.Conn, error) {
 				dialer := net.Dialer{
 					Timeout:   30 * time.Second,
-					KeepAlive: 30 * time.Second,
+					KeepAlive: 90 * time.Second,
 				}
 				return dialer.Dial(network, addr)
 			},
+			ResponseHeaderTimeout: time.Second * 10,
 		}
 
 		httpClient.Transport = tr
