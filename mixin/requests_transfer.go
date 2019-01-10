@@ -3,7 +3,6 @@ package mixin
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"github.com/fox-one/mixin-sdk/utils"
 	"github.com/shopspring/decimal"
@@ -21,11 +20,6 @@ type TransferInput struct {
 }
 
 func (input TransferInput) verify(snapshot Snapshot) bool {
-	mins := time.Now().Sub(snapshot.CreatedAt).Minutes()
-	if mins < -10 || mins > 10 {
-		log.Debugf("request send %d minutes ago\n", mins)
-		return false
-	}
 	if len(input.OpponentID) > 0 {
 		if snapshot.AssetID != input.AssetID {
 			log.Debugln("asset id doses not match", snapshot.AssetID, input.AssetID)
