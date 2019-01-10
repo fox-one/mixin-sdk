@@ -16,7 +16,7 @@ type TransferInput struct {
 	AssetID    string `json:"asset_id,omitempty"`
 	OpponentID string `json:"opponent_id,omitempty"`
 	Amount     string `json:"amount,omitempty"`
-	TraceID    string `json:"traceID,omitempty"`
+	TraceID    string `json:"trace_id,omitempty"`
 	Memo       string `json:"memo,omitempty"`
 }
 
@@ -39,7 +39,7 @@ func (input TransferInput) verify(snapshot Snapshot) bool {
 
 	iAmount, _ := decimal.NewFromString(input.Amount)
 	oAmount, _ := decimal.NewFromString(snapshot.Amount)
-	diff := iAmount.Add(oAmount).Round(8)
+	diff := iAmount.Add(oAmount).Truncate(8)
 	if !diff.IsZero() {
 		log.Debugln("amount does not match", input.Amount, snapshot.Amount, diff.IsZero())
 		return false
