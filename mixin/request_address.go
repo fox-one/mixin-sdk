@@ -10,6 +10,9 @@ import (
 
 // CreateWithdrawAddress create withdraw address
 func (user User) CreateWithdrawAddress(ctx context.Context, address WithdrawAddress, pin string) (*WithdrawAddress, *Error) {
+	if len(address.Label) == 0 {
+		address.Label = "Created by FoxONE"
+	}
 	paras := utils.UnselectFields(address, "fee", "dust")
 	data, err := user.RequestWithPIN(ctx, "POST", "/addresses", paras, pin)
 	if err != nil {
