@@ -98,7 +98,7 @@ func DoRequest(request *http.Request) (*http.Response, error) {
 	})
 
 	resp, err := httpClient.Do(request)
-	if err == nil && resp != nil && resp.StatusCode != http.StatusOK {
+	if err == nil && resp != nil && (resp.StatusCode < 200 || resp.StatusCode > 299) {
 		err = errors.New(resp.Status)
 	}
 
