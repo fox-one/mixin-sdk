@@ -3,7 +3,8 @@ package utils
 import (
 	"bytes"
 	"compress/gzip"
-	"errors"
+	"context"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -11,6 +12,34 @@ import (
 	"sync"
 	"time"
 )
+
+// Result response result
+type Result struct {
+	status     string
+	statusCode int
+	data       []byte
+	err        error
+}
+
+// Err response error
+func (r *Result) Err() error {
+	return r.err
+}
+
+// Status response status
+func (r *Result) Status() (int, string) {
+	return r.statusCode, r.status
+}
+
+// Bytes response body
+func (r *Result) Bytes() ([]byte, error) {
+	return r.data, r.err
+}
+
+// Reader response body reader
+func (r *Result) Reader() (io.Reader, error) {
+	return bytes.NewReader(r.data), r.err
+}
 
 // BuildURL build url
 func BuildURL(path string, paras ...string) (string, error) {
@@ -46,40 +75,24 @@ func NewRequest(url, method, payload string, headers ...string) (*http.Request, 
 	return req, err
 }
 
-// GetRequest new get request
-func GetRequest(url string, headers ...string) (*http.Response, error) {
-	return SendRequest(url, "GET", "", headers...)
-}
-
-// PostRequest new post request
-func PostRequest(url string, payload string, headers ...string) (*http.Response, error) {
-	return SendRequest(url, "POST", payload, headers...)
-}
-
-// PutRequest new put request
-func PutRequest(url string, payload string, headers ...string) (*http.Response, error) {
-	return SendRequest(url, "PUT", payload, headers...)
-}
-
-// DeleteRequest new delete request
-func DeleteRequest(url string, payload string, headers ...string) (*http.Response, error) {
-	return SendRequest(url, "DELETE", payload, headers...)
-}
-
 var (
 	httpClient *http.Client
 	once       sync.Once
 )
 
 // SendRequest send request
-func SendRequest(url string, method string, payload string, headers ...string) (*http.Response, error) {
-	req, _ := http.NewRequest(method, url, bytes.NewBufferString(payload))
+func SendRequest(ctx context.Context, url string, method string, payload string, headers ...string) *Result {
+	req, err := http.NewRequest(method, url, bytes.NewBufferString(payload))
+	if err != nil {
+		return &Result{err: err}
+	}
+	req = req.WithContext(ctx)
 	SetHeaders(req, headers...)
 	return DoRequest(req)
 }
 
 // DoRequest do request
-func DoRequest(request *http.Request) (*http.Response, error) {
+func DoRequest(request *http.Request) *Result {
 	once.Do(func() {
 		httpClient = &http.Client{}
 
@@ -98,11 +111,14 @@ func DoRequest(request *http.Request) (*http.Response, error) {
 	})
 
 	resp, err := httpClient.Do(request)
-	if err == nil && resp != nil && (resp.StatusCode < 200 || resp.StatusCode > 299) {
-		err = errors.New(resp.Status)
+	if err != nil {
+		return &Result{err: err}
 	}
 
-	return resp, err
+	result := &Result{}
+	result.statusCode, result.status = resp.StatusCode, resp.Status
+	result.data, result.err = ReadResponse(resp)
+	return result
 }
 
 // ReadResponse read response

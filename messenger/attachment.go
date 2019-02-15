@@ -4,9 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/fox-one/mixin-sdk/utils"
-
 	"github.com/fox-one/mixin-sdk/mixin"
+	"github.com/fox-one/mixin-sdk/utils"
 )
 
 // Attachment attachment
@@ -48,8 +47,8 @@ func (m Messenger) Upload(ctx context.Context, file []byte) (string, string, err
 		return "", "", err
 	}
 
-	_, err = utils.DoRequest(req)
-	if err != nil {
+	result := utils.DoRequest(req)
+	if err := result.Err(); err != nil {
 		return "", "", err
 	}
 	return attachment.AttachmentID, attachment.ViewURL, nil

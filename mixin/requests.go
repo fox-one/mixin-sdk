@@ -39,21 +39,14 @@ func (user *User) Request(ctx context.Context, method, uri string, payload []byt
 	}
 
 	url := "https://api.mixin.one" + uri
-	req, err := utils.NewRequest(url, method, string(payload), "Content-Type", "application/json", "Authorization", "Bearer "+accessToken)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Debugln("do request: ", method, uri)
-
 	if len(timeouts) > 0 && timeouts[0] > 0 {
 		c, cancel := context.WithTimeout(ctx, time.Second*time.Duration(timeouts[0]))
 		defer cancel()
 
 		ctx = c
 	}
-
-	req = req.WithContext(ctx)
-	resp, _ := utils.DoRequest(req)
-	return utils.ReadResponse(resp)
+	result := utils.SendRequest(ctx, url, method, string(payload), "Content-Type", "application/json", "Authorization", "Bearer "+accessToken)
+	code, status := result.Status()
+	log.Debugln("do request: ", method, uri, string(payload), code, status)
+	return result.Bytes()
 }
