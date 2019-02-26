@@ -132,7 +132,8 @@ func ReadResponse(resp *http.Response) ([]byte, error) {
 
 	var reader = resp.Body
 	if strings.Contains(resp.Header.Get("Content-Encoding"), "gzip") {
-		reader, err := gzip.NewReader(resp.Body)
+		var err error
+		reader, err = gzip.NewReader(resp.Body)
 		if err != nil {
 			return nil, err
 		}
