@@ -29,8 +29,8 @@ func validateAsset(asset *mixin.Asset) {
 		log.Panicln("empty public key and account name", asset)
 	}
 
-	if asset.Balance == nil {
-		log.Panicln("empty balance")
+	if asset.Balance.IsNegative() {
+		log.Panicln("invalid balance")
 	}
 }
 
