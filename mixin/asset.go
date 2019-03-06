@@ -1,5 +1,9 @@
 package mixin
 
+import (
+	"github.com/shopspring/decimal"
+)
+
 // Asset asset info
 type Asset struct {
 	AssetID        string  `json:"asset_id"`
@@ -14,7 +18,7 @@ type Asset struct {
 	Confirmations  int     `json:"confirmations,omitempty"`
 	Capitalization float64 `json:"capitalization,omitempty"`
 
-	PriceUsd  string `json:"price_usd,omitempty"`
-	ChangeUsd string `json:"change_usd,omitempty"`
-	Balance   string `json:"balance,omitempty"`
+	PriceUsd  *decimal.Decimal `json:"price_usd,omitempty"`
+	ChangeUsd *decimal.Decimal `json:"change_usd,omitempty"`
+	Balance   *decimal.Decimal `json:"balance,omitempty"`
 }
