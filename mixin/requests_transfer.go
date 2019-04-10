@@ -21,6 +21,7 @@ type TransferInput struct {
 }
 
 func (input TransferInput) verify(snapshot Snapshot) bool {
+	// transfer
 	if len(input.OpponentID) > 0 {
 		if snapshot.AssetID != input.AssetID {
 			log.Debugln("asset id doses not match", snapshot.AssetID, input.AssetID)
@@ -30,15 +31,18 @@ func (input TransferInput) verify(snapshot Snapshot) bool {
 			log.Debugln("asset id doses not match", snapshot.AssetID, input.AssetID)
 			return false
 		}
+
+		iAmount, _ := decimal.NewFromString(input.Amount)
+		oAmount, _ := decimal.NewFromString(snapshot.Amount)
+		diff := iAmount.Add(oAmount).Truncate(8)
+		if !diff.IsZero() {
+			log.Debugln("amount does not match", input.Amount, snapshot.Amount, diff.IsZero())
+			return false
+		}
 	}
 
-	iAmount, _ := decimal.NewFromString(input.Amount)
-	oAmount, _ := decimal.NewFromString(snapshot.Amount)
-	diff := iAmount.Add(oAmount).Truncate(8)
-	if !diff.IsZero() {
-		log.Debugln("amount does not match", input.Amount, snapshot.Amount, diff.IsZero())
-		return false
-	}
+	// withdraw
+	// TODO EOS withdraw will Truncate(4)
 
 	return true
 }
