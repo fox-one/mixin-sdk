@@ -30,7 +30,7 @@ func (sessionError Error) Error() string {
 	return string(str)
 }
 
-func requestError(err error) *Error {
+func requestError(err error) error {
 	return &Error{
 		Status:      RequestFailed,
 		Code:        504,
@@ -38,7 +38,7 @@ func requestError(err error) *Error {
 	}
 }
 
-func traceError() *Error {
+func traceError() error {
 	return &Error{
 		Status:      InvalidTraceID,
 		Code:        400,

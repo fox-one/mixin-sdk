@@ -6,7 +6,7 @@ import (
 )
 
 // ModifyPIN modify pin
-func (user User) ModifyPIN(ctx context.Context, oldPIN, pin string) *Error {
+func (user User) ModifyPIN(ctx context.Context, oldPIN, pin string) error {
 	if pin == oldPIN {
 		return nil
 	}
@@ -40,7 +40,7 @@ func (user User) ModifyPIN(ctx context.Context, oldPIN, pin string) *Error {
 }
 
 // VerifyPIN verify user pin
-func (user User) VerifyPIN(ctx context.Context, pin string) *Error {
+func (user User) VerifyPIN(ctx context.Context, pin string) error {
 	data, err := user.RequestWithPIN(ctx, "POST", "/pin/verify", nil, pin)
 
 	var resp struct {

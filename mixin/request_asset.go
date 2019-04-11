@@ -12,7 +12,7 @@ type AssetFee struct {
 }
 
 // ReadAssetFee read asset withdraw fee
-func (user User) ReadAssetFee(ctx context.Context, assetID string) (*AssetFee, *Error) {
+func (user User) ReadAssetFee(ctx context.Context, assetID string) (*AssetFee, error) {
 	data, err := user.Request(ctx, "GET", "/assets/"+assetID+"/fee", nil)
 	if err != nil {
 		return nil, requestError(err)
@@ -31,7 +31,7 @@ func (user User) ReadAssetFee(ctx context.Context, assetID string) (*AssetFee, *
 }
 
 // ReadAsset get asset info, including balance, address info, etc.
-func (user User) ReadAsset(ctx context.Context, assetID string) (*Asset, *Error) {
+func (user User) ReadAsset(ctx context.Context, assetID string) (*Asset, error) {
 	data, err := user.Request(ctx, "GET", "/assets/"+assetID, nil)
 	if err != nil {
 		return nil, requestError(err)
@@ -51,7 +51,7 @@ func (user User) ReadAsset(ctx context.Context, assetID string) (*Asset, *Error)
 }
 
 // ReadAssets get user assets info, including balance, address info, etc.
-func (user User) ReadAssets(ctx context.Context) ([]*Asset, *Error) {
+func (user User) ReadAssets(ctx context.Context) ([]*Asset, error) {
 	data, err := user.Request(ctx, "GET", "/assets", nil)
 	if err != nil {
 		return nil, requestError(err)

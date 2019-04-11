@@ -9,7 +9,7 @@ import (
 )
 
 // CreateWithdrawAddress create withdraw address
-func (user User) CreateWithdrawAddress(ctx context.Context, address WithdrawAddress, pin string) (*WithdrawAddress, *Error) {
+func (user User) CreateWithdrawAddress(ctx context.Context, address WithdrawAddress, pin string) (*WithdrawAddress, error) {
 	if len(address.Label) == 0 {
 		address.Label = "Created by FoxONE"
 	}
@@ -53,7 +53,7 @@ func (user User) ReadWithdrawAddresses(ctx context.Context, assetID string) ([]*
 }
 
 // DeleteWithdrawAddress delete withdraw address
-func (user User) DeleteWithdrawAddress(ctx context.Context, addressID, pin string) *Error {
+func (user User) DeleteWithdrawAddress(ctx context.Context, addressID, pin string) error {
 	data, err := user.RequestWithPIN(ctx, "POST", fmt.Sprintf("/addresses/%s/delete", addressID), nil, pin)
 	if err != nil {
 		return requestError(err)

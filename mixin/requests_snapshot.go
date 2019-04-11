@@ -10,7 +10,7 @@ import (
 )
 
 // ReadNetwork read network snapshots
-func (user User) ReadNetwork(ctx context.Context, assetID string, offset time.Time, order bool, limit uint) ([]*Snapshot, *Error) {
+func (user User) ReadNetwork(ctx context.Context, assetID string, offset time.Time, order bool, limit uint) ([]*Snapshot, error) {
 	uri := fmt.Sprintf("/network/snapshots?limit=%d", limit)
 	if !offset.IsZero() {
 		uri = uri + "&offset=" + offset.UTC().Format(time.RFC3339Nano)
@@ -41,7 +41,7 @@ func (user User) ReadNetwork(ctx context.Context, assetID string, offset time.Ti
 }
 
 // ReadSnapshot read snapshot with snapshot id
-func (user User) ReadSnapshot(ctx context.Context, snapshotID string) (*Snapshot, *Error) {
+func (user User) ReadSnapshot(ctx context.Context, snapshotID string) (*Snapshot, error) {
 	data, err := user.Request(ctx, "GET", "/network/snapshots/"+snapshotID, nil)
 	if err != nil {
 		return nil, requestError(err)
@@ -60,7 +60,7 @@ func (user User) ReadSnapshot(ctx context.Context, snapshotID string) (*Snapshot
 }
 
 // ReadTransfer read snapshot with trace id
-func (user User) ReadTransfer(ctx context.Context, traceID string) (*Snapshot, *Error) {
+func (user User) ReadTransfer(ctx context.Context, traceID string) (*Snapshot, error) {
 	data, err := user.Request(ctx, "GET", "/transfers/trace/"+traceID, nil)
 	if err != nil {
 		return nil, requestError(err)
@@ -79,7 +79,7 @@ func (user User) ReadTransfer(ctx context.Context, traceID string) (*Snapshot, *
 }
 
 // ReadExternal read external snapshots
-func (user User) ReadExternal(ctx context.Context, assetID, publicKey, accountName, accountTag string, offset time.Time, limit int) ([]*PendingSnapshot, *Error) {
+func (user User) ReadExternal(ctx context.Context, assetID, publicKey, accountName, accountTag string, offset time.Time, limit int) ([]*PendingSnapshot, error) {
 	var paras = make([]string, 0, 12)
 	if len(assetID) > 0 {
 		paras = append(paras, "asset", assetID)

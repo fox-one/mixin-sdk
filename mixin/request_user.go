@@ -10,7 +10,7 @@ import (
 )
 
 // CreateUser create a new wallet user
-func (user User) CreateUser(ctx context.Context, privateKey *rsa.PrivateKey, fullname string) (*User, *Error) {
+func (user User) CreateUser(ctx context.Context, privateKey *rsa.PrivateKey, fullname string) (*User, error) {
 	pbts, err := x509.MarshalPKIXPublicKey(privateKey.Public())
 	if err != nil {
 		return nil, requestError(err)
