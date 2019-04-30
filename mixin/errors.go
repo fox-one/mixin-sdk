@@ -32,16 +32,16 @@ func (sessionError Error) Error() string {
 
 func requestError(err error) error {
 	return &Error{
-		Status:      RequestFailed,
-		Code:        504,
+		Status:      504,
+		Code:        RequestFailed,
 		Description: err.Error(),
 	}
 }
 
 func traceError() error {
 	return &Error{
-		Status:      InvalidTraceID,
-		Code:        400,
+		Status:      202,
+		Code:        InvalidTraceID,
 		Description: "invalid trace id",
 	}
 }
