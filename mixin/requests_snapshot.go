@@ -40,9 +40,28 @@ func (user User) ReadNetwork(ctx context.Context, assetID string, offset time.Ti
 	return resp.Snapshots, nil
 }
 
+// ReadNetworkSnapshot read snapshot with snapshot id
+func (user User) ReadNetworkSnapshot(ctx context.Context, snapshotID string) (*Snapshot, error) {
+	data, err := user.Request(ctx, "GET", "/network/snapshots/"+snapshotID, nil)
+	if err != nil {
+		return nil, requestError(err)
+	}
+
+	var resp struct {
+		Snapshot *Snapshot `json:"data,omitempty"`
+		Error    *Error    `json:"error,omitempty"`
+	}
+	if err = json.Unmarshal(data, &resp); err != nil {
+		return nil, requestError(err)
+	} else if resp.Error != nil {
+		return nil, resp.Error
+	}
+	return resp.Snapshot, nil
+}
+
 // ReadSnapshot read snapshot with snapshot id
 func (user User) ReadSnapshot(ctx context.Context, snapshotID string) (*Snapshot, error) {
-	data, err := user.Request(ctx, "GET", "/network/snapshots/"+snapshotID, nil)
+	data, err := user.Request(ctx, "GET", "/snapshots/"+snapshotID, nil)
 	if err != nil {
 		return nil, requestError(err)
 	}
