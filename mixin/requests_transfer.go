@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/fox-one/mixin-sdk/utils"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
@@ -78,7 +78,7 @@ func (user User) VerifyPayment(ctx context.Context, input *TransferInput) (bool,
 
 // Transfer transfer to account
 //	asset_id, opponent_id, amount, traceID, memo
-func (user User) Transfer(ctx context.Context, input *TransferInput, pin string) (*Snapshot, *Error) {
+func (user User) Transfer(ctx context.Context, input *TransferInput, pin string) (*Snapshot, error) {
 	if len(input.TraceID) == 0 {
 		input.TraceID = uuid.Must(uuid.NewV4()).String()
 	}
@@ -111,7 +111,7 @@ func (user User) Transfer(ctx context.Context, input *TransferInput, pin string)
 
 // Withdraw withdraw to address
 //	address_id, opponent_id, amount, traceID, memo
-func (user User) Withdraw(ctx context.Context, input *TransferInput, pin string) (*Snapshot, *Error) {
+func (user User) Withdraw(ctx context.Context, input *TransferInput, pin string) (*Snapshot, error) {
 	if len(input.TraceID) == 0 {
 		input.TraceID = uuid.Must(uuid.NewV4()).String()
 	}
