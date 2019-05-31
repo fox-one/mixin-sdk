@@ -37,6 +37,13 @@ func (user User) ReadNetwork(ctx context.Context, assetID string, offset time.Ti
 	} else if resp.Error != nil {
 		return nil, resp.Error
 	}
+
+	for _, snapshot := range resp.Snapshots {
+		if snapshot.Asset != nil {
+			snapshot.AssetID = snapshot.Asset.AssetID
+		}
+	}
+
 	return resp.Snapshots, nil
 }
 
