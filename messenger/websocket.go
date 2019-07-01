@@ -14,7 +14,7 @@ import (
 
 	"github.com/fox-one/mixin-sdk/mixin"
 	"github.com/gorilla/websocket"
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 )
 
 const (
@@ -146,7 +146,7 @@ func (b *Messenger) Loop(ctx context.Context, listener BlazeListener) error {
 	}
 }
 
-func (b *BlazeClient) SendMessage(ctx context.Context, conversationId, recipientId, category, content, representativeId string) error {
+func (b *BlazeClient) SendMessage(ctx context.Context, conversationId, recipientId, category, content, representativeId string, messageID ...string) error {
 	params := map[string]interface{}{
 		"conversation_id":   conversationId,
 		"recipient_id":      recipientId,
@@ -155,13 +155,16 @@ func (b *BlazeClient) SendMessage(ctx context.Context, conversationId, recipient
 		"category":          category,
 		"data":              base64.StdEncoding.EncodeToString([]byte(content)),
 	}
+	if len(messageID) > 0 && messageID[0] != "" {
+		params["message_id"] = messageID[0]
+	}
 	if err := writeMessageAndWait(ctx, b.mc, createMessageAction, params); err != nil {
 		return BlazeServerError(ctx, err)
 	}
 	return nil
 }
 
-func (b *BlazeClient) SendPlainText(ctx context.Context, msg MessageView, content string) error {
+func (b *BlazeClient) SendPlainText(ctx context.Context, msg MessageView, content string, messageID ...string) error {
 	params := map[string]interface{}{
 		"conversation_id": msg.ConversationId,
 		"recipient_id":    msg.UserId,
@@ -169,13 +172,16 @@ func (b *BlazeClient) SendPlainText(ctx context.Context, msg MessageView, conten
 		"category":        "PLAIN_TEXT",
 		"data":            base64.StdEncoding.EncodeToString([]byte(content)),
 	}
+	if len(messageID) > 0 && messageID[0] != "" {
+		params["message_id"] = messageID[0]
+	}
 	if err := writeMessageAndWait(ctx, b.mc, createMessageAction, params); err != nil {
 		return BlazeServerError(ctx, err)
 	}
 	return nil
 }
 
-func (b *BlazeClient) SendContact(ctx context.Context, conversationId, recipientId, contactId string) error {
+func (b *BlazeClient) SendContact(ctx context.Context, conversationId, recipientId, contactId string, messageID ...string) error {
 	contactMap := map[string]string{"user_id": contactId}
 	contactData, _ := json.Marshal(contactMap)
 	params := map[string]interface{}{
@@ -185,13 +191,34 @@ func (b *BlazeClient) SendContact(ctx context.Context, conversationId, recipient
 		"category":        "PLAIN_CONTACT",
 		"data":            base64.StdEncoding.EncodeToString(contactData),
 	}
+	if len(messageID) > 0 && messageID[0] != "" {
+		params["message_id"] = messageID[0]
+	}
 	if err := writeMessageAndWait(ctx, b.mc, createMessageAction, params); err != nil {
 		return BlazeServerError(ctx, err)
 	}
 	return nil
 }
 
-func (b *BlazeClient) SendAppButton(ctx context.Context, conversationId, recipientId, label, action, color string) error {
+func (b *BlazeClient) SendAppCard(ctx context.Context, conversationId, recipientId, data string, messageID ...string) error {
+	params := map[string]interface{}{
+		"conversation_id": conversationId,
+		"recipient_id":    recipientId,
+		"message_id":      UuidNewV4().String(),
+		"category":        "APP_CARD",
+		"data":            data,
+	}
+	if len(messageID) > 0 && messageID[0] != "" {
+		params["message_id"] = messageID[0]
+	}
+	err := writeMessageAndWait(ctx, b.mc, createMessageAction, params)
+	if err != nil {
+		return BlazeServerError(ctx, err)
+	}
+	return nil
+}
+
+func (b *BlazeClient) SendAppButton(ctx context.Context, conversationId, recipientId, label, action, color string, messageID ...string) error {
 	btns, err := json.Marshal([]interface{}{map[string]string{
 		"label":  label,
 		"action": action,
@@ -206,6 +233,9 @@ func (b *BlazeClient) SendAppButton(ctx context.Context, conversationId, recipie
 		"message_id":      UuidNewV4().String(),
 		"category":        "APP_BUTTON_GROUP",
 		"data":            base64.StdEncoding.EncodeToString(btns),
+	}
+	if len(messageID) > 0 && messageID[0] != "" {
+		params["message_id"] = messageID[0]
 	}
 	err = writeMessageAndWait(ctx, b.mc, createMessageAction, params)
 	if err != nil {

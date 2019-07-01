@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 )
 
 // UUIDWithString generate uuid with text

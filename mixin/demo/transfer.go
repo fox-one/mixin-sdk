@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/fox-one/mixin-sdk/mixin"
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 )
 
 func doTransfer(ctx context.Context, user *mixin.User, assetID, opponentID, amount, memo, pin string) *mixin.Snapshot {

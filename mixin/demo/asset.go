@@ -56,8 +56,4 @@ func doAssets(ctx context.Context, user *mixin.User) {
 		log.Panicln(err)
 	}
 	printJSON("assets", assets)
-
-	for _, asset := range assets {
-		validateAsset(asset)
-	}
 }

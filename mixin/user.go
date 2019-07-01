@@ -14,7 +14,7 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	uuid "github.com/satori/go.uuid"
+	uuid "github.com/gofrs/uuid"
 )
 
 // User wallet entity
@@ -28,11 +28,17 @@ type User struct {
 
 	pinCipher  *cipher.Block
 	privateKey *rsa.PrivateKey
+	scopes     string
 }
 
 // SetPrivateKey set private key
 func (user *User) SetPrivateKey(privateKey *rsa.PrivateKey) {
 	user.privateKey = privateKey
+}
+
+// SetScopes set scopes
+func (user *User) SetScopes(scopes string) {
+	user.scopes = scopes
 }
 
 // HasPrivateKey private key has been set
@@ -98,14 +104,18 @@ func (user *User) SignToken(method, uri string, body []byte) (string, error) {
 	expire := time.Now().UTC().Add(time.Hour * 24 * 30 * 3)
 	sum := sha256.Sum256(append([]byte(method+uri), body...))
 
-	token := jwt.NewWithClaims(jwt.SigningMethodRS512, jwt.MapClaims{
+	jwtMap := jwt.MapClaims{
 		"uid": user.UserID,
 		"sid": user.SessionID,
 		"iat": time.Now().UTC().Unix(),
 		"exp": expire.Unix(),
 		"jti": uuid.Must(uuid.NewV4()).String(),
 		"sig": hex.EncodeToString(sum[:]),
-	})
+	}
+	if user.scopes != "" {
+		jwtMap["scp"] = user.scopes
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodRS512, jwtMap)
 
 	return token.SignedString(user.privateKey)
 }
