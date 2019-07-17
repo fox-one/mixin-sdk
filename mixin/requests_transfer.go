@@ -12,12 +12,13 @@ import (
 
 // TransferInput input for transfer/verify payment request
 type TransferInput struct {
-	AddressID  string `json:"address_id,omitempty"`
-	AssetID    string `json:"asset_id,omitempty"`
-	OpponentID string `json:"opponent_id,omitempty"`
-	Amount     string `json:"amount,omitempty"`
-	TraceID    string `json:"trace_id,omitempty"`
-	Memo       string `json:"memo,omitempty"`
+	AddressID   string `json:"address_id,omitempty"`
+	AssetID     string `json:"asset_id,omitempty"`
+	OpponentID  string `json:"opponent_id,omitempty"`
+	Amount      string `json:"amount,omitempty"`
+	TraceID     string `json:"trace_id,omitempty"`
+	Memo        string `json:"memo,omitempty"`
+	OpponentKey string `json:"opponent_key,omitempty"`
 }
 
 func (input TransferInput) verify(snapshot Snapshot) bool {

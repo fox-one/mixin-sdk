@@ -8,6 +8,20 @@ import (
 	"github.com/gofrs/uuid"
 )
 
+func doTransaction(ctx context.Context, user *mixin.User, assetID, opponentKey, amount, memo, pin string) {
+	snapshot, err := user.Transaction(ctx, &mixin.TransferInput{
+		TraceID:     uuid.Must(uuid.NewV4()).String(),
+		AssetID:     assetID,
+		OpponentKey: opponentKey,
+		Amount:      amount,
+		Memo:        memo,
+	}, pin)
+	if err != nil {
+		log.Panicln(err)
+	}
+	printJSON("do transfer", snapshot)
+}
+
 func doTransfer(ctx context.Context, user *mixin.User, assetID, opponentID, amount, memo, pin string) *mixin.Snapshot {
 	snapshot, err := user.Transfer(ctx, &mixin.TransferInput{
 		TraceID:    uuid.Must(uuid.NewV4()).String(),

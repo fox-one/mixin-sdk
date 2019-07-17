@@ -13,12 +13,12 @@ import (
 	"time"
 
 	"github.com/fox-one/mixin-sdk/mixin"
-	"github.com/gorilla/websocket"
 	"github.com/gofrs/uuid"
+	"github.com/gorilla/websocket"
 )
 
 const (
-	keepAlivePeriod = 3 * time.Second
+	keepAlivePeriod = 10 * time.Second
 	writeWait       = 10 * time.Second
 	pongWait        = 10 * time.Second
 	pingPeriod      = (pongWait * 9) / 10
@@ -354,7 +354,7 @@ func writeMessageAndWait(ctx context.Context, mc *messageContext, action string,
 	mc.transactions.set(id, func(t BlazeMessage) error {
 		select {
 		case resp <- t:
-		case <-time.After(1 * time.Second):
+		case <-time.After(5 * time.Second):
 			return fmt.Errorf("timeout to hook %s %s", action, id)
 		}
 		return nil

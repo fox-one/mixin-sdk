@@ -58,4 +58,8 @@ func main() {
 	doReadTransfer(ctx, u, snap.TraceID)
 
 	doReadExternal(ctx, u)
+
+	doReadNetworkInfo(ctx, user)
+
+	doTransaction(ctx, user, "965e5c6e-434c-3fa9-b780-c50f43cd955c", "XINT55hZYxzrtqJsWViUbyoxytJ6RoKUZfpnSCQTbgX8fjcdQ7GwjRySLxiPMWxAMhoN6KPa7SFkyv9FQXC3fGJuKHLf3est", "1", "test", PIN)
 }
