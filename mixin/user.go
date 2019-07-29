@@ -100,15 +100,19 @@ func (user *User) signPIN(pin string) (string, error) {
 }
 
 // SignToken sign request
-func (user *User) SignToken(method, uri string, body []byte) (string, error) {
-	expire := time.Now().UTC().Add(time.Hour * 24 * 30 * 3)
+func (user *User) SignToken(method, uri string, body []byte, expire ...time.Duration) (string, error) {
+	e := time.Hour * 24 * 30 * 3
+	if len(expire) > 0 && expire[0] > 5 {
+		e = expire[0]
+	}
+	expireAt := time.Now().UTC().Add(e)
 	sum := sha256.Sum256(append([]byte(method+uri), body...))
 
 	jwtMap := jwt.MapClaims{
 		"uid": user.UserID,
 		"sid": user.SessionID,
 		"iat": time.Now().UTC().Unix(),
-		"exp": expire.Unix(),
+		"exp": expireAt.Unix(),
 		"jti": uuid.Must(uuid.NewV4()).String(),
 		"sig": hex.EncodeToString(sum[:]),
 	}
