@@ -3,7 +3,6 @@ package mixin
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"time"
 )
 
@@ -21,7 +20,6 @@ type Message struct {
 
 func (user User) SendMessages(ctx context.Context, body []byte) error {
 	data, err := user.Request(ctx, "POST", "/messages", body)
-	log.Println(string(data), err)
 	if err != nil {
 		return requestError(err)
 	}
@@ -30,8 +28,7 @@ func (user User) SendMessages(ctx context.Context, body []byte) error {
 		Error *Error `json:"error,omitempty"`
 	}
 	if err = json.Unmarshal(data, &resp); err != nil {
-		log.Println(resp, err)
 		return requestError(err)
 	}
-	return nil
+	return resp.Error
 }
