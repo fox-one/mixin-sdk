@@ -25,10 +25,13 @@ func (user User) SendMessages(ctx context.Context, body []byte) error {
 	}
 
 	var resp struct {
-		Error *Error `json:"error,omitempty"`
+		Error Error `json:"error,omitempty"`
 	}
 	if err = json.Unmarshal(data, &resp); err != nil {
 		return requestError(err)
 	}
-	return resp.Error
+	if resp.Error.Code != 200 {
+		return resp.Error
+	}
+	return nil
 }
