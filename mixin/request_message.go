@@ -30,7 +30,7 @@ func (user User) SendMessages(ctx context.Context, body []byte) error {
 	if err = json.Unmarshal(data, &resp); err != nil {
 		return requestError(err)
 	}
-	if resp.Error.Code != 200 {
+	if resp.Error.Code != 0 {
 		return resp.Error
 	}
 	return nil
