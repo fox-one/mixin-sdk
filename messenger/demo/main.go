@@ -46,7 +46,7 @@ func (h Handler) Run(ctx context.Context) {
 
 func (h Handler) Send(ctx context.Context, userId, content string) error {
 	msgView := messenger.MessageView{
-		ConversationId: utils.UniqueConversationId(ClientID, userId),
+		ConversationId: utils.UniqueConversationID(ClientID, userId),
 		UserId:         userId,
 	}
 	return h.SendPlainText(ctx, msgView, content)

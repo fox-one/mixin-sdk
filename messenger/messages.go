@@ -1,9 +1,11 @@
-package mixin
+package messenger
 
 import (
 	"context"
 	"encoding/json"
 	"time"
+
+	"github.com/fox-one/mixin-sdk/mixin"
 )
 
 type Message struct {
@@ -18,14 +20,14 @@ type Message struct {
 	UpdatedAt        time.Time `json:"updated_at,omitempty"`
 }
 
-func (user User) SendMessages(ctx context.Context, body []byte) error {
-	data, err := user.Request(ctx, "POST", "/messages", body)
+func (m Messenger) SendMessages(ctx context.Context, body []byte) error {
+	data, err := m.Request(ctx, "POST", "/messages", body)
 	if err != nil {
 		return requestError(err)
 	}
 
 	var resp struct {
-		Error Error `json:"error,omitempty"`
+		Error mixin.Error `json:"error,omitempty"`
 	}
 	if err = json.Unmarshal(data, &resp); err != nil {
 		return requestError(err)
