@@ -50,11 +50,3 @@ func (user *User) Request(ctx context.Context, method, uri string, payload []byt
 	log.Debugln("do request: ", method, uri, string(payload), code, status)
 	return result.Bytes()
 }
-
-func (user *User) RequestWithToken(ctx context.Context, method, uri string, payload []byte, accessToken string) ([]byte, error) {
-	url := "https://api.mixin.one" + uri
-	result := utils.SendRequest(ctx, url, method, string(payload), "Content-Type", "application/json", "Authorization", "Bearer "+accessToken)
-	code, status := result.Status()
-	log.Debugln("do request: ", method, uri, string(payload), code, status)
-	return result.Bytes()
-}
