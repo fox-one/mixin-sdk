@@ -20,7 +20,8 @@ type Message struct {
 	UpdatedAt        time.Time `json:"updated_at,omitempty"`
 }
 
-func (m Messenger) SendMessages(ctx context.Context, body []byte) error {
+func (m Messenger) SendMessages(ctx context.Context, messages ...Message) error {
+	body, _ := json.Marshal(messages)
 	data, err := m.Request(ctx, "POST", "/messages", body)
 	if err != nil {
 		return requestError(err)
