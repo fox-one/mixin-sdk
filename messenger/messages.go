@@ -3,25 +3,36 @@ package messenger
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"github.com/fox-one/mixin-sdk/mixin"
 )
 
 type Message struct {
-	ConversationID   string    `json:"conversation_id"`
-	RecipientID      string    `json:"recipient_id"`
-	MessageID        string    `json:"message_id"`
-	QuoteMessageID   string    `json:"quote_message_id,omitempty"`
-	Category         string    `json:"category"`
-	Data             string    `json:"data"`
-	RepresentativeID string    `json:"representative_id,omitempty"`
-	CreatedAt        time.Time `json:"created_at,omitempty"`
-	UpdatedAt        time.Time `json:"updated_at,omitempty"`
+	ConversationID   string `json:"conversation_id"`
+	RecipientID      string `json:"recipient_id,omitempty"`
+	MessageID        string `json:"message_id"`
+	QuoteMessageID   string `json:"quote_message_id,omitempty"`
+	Category         string `json:"category"`
+	Data             string `json:"data"`
+	RepresentativeID string `json:"representative_id,omitempty"`
 }
 
 func (m Messenger) SendMessages(ctx context.Context, messages ...Message) error {
-	body, _ := json.Marshal(messages)
+	var body []byte
+	var err error
+	switch len(messages) {
+	case 0:
+		return nil
+	case 1:
+		body, err = json.Marshal(messages[0])
+	default:
+		body, err = json.Marshal(messages)
+	}
+
+	if err != nil {
+		return err
+	}
+
 	data, err := m.Request(ctx, "POST", "/messages", body)
 	if err != nil {
 		return requestError(err)
