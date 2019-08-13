@@ -24,16 +24,22 @@ type Snapshot struct {
 	Asset *Asset `gorm:"-" json:"asset,omitempty"`
 }
 
-// PendingSnapshot pending snapshot
-type PendingSnapshot struct {
-	Snapshot
+// DepositTransaction deposit transaction
+type DepositTransaction struct {
+	Type string `json:"type"`
 
-	TransactionID string `json:"transaction_id"`
+	TransactionID   string    `json:"transaction_id"`
+	TransactionHash string    `json:"transaction_hash"`
+	CreatedAt       time.Time `json:"created_at"`
 
+	AssetID       string `json:"asset_id,omitempty"`
+	ChainID       string `json:"chain_id,omitempty"`
+	Amount        string `json:"amount"`
+	Confirmations int    `json:"confirmations"`
+	Threshold     int    `json:"threshold"`
+
+	Sender      string `json:"sender"`
 	PublicKey   string `json:"public_key"`
 	AccountName string `json:"account_name"`
 	AccountTag  string `json:"account_tag"`
-
-	Confirmations int `json:"confirmations"`
-	Threshold     int `json:"threshold"`
 }

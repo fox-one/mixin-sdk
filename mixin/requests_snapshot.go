@@ -105,7 +105,7 @@ func (user User) ReadTransfer(ctx context.Context, traceID string) (*Snapshot, e
 }
 
 // ReadExternal read external snapshots
-func (user User) ReadExternal(ctx context.Context, assetID, publicKey, accountName, accountTag string, offset time.Time, limit int) ([]*PendingSnapshot, error) {
+func (user User) ReadExternal(ctx context.Context, assetID, publicKey, accountName, accountTag string, offset time.Time, limit int) ([]*DepositTransaction, error) {
 	var paras = make([]string, 0, 12)
 	if len(assetID) > 0 {
 		paras = append(paras, "asset", assetID)
@@ -134,8 +134,8 @@ func (user User) ReadExternal(ctx context.Context, assetID, publicKey, accountNa
 	}
 
 	var resp struct {
-		Snapshots []*PendingSnapshot `json:"data,omitempty"`
-		Error     *Error             `json:"error,omitempty"`
+		Snapshots []*DepositTransaction `json:"data,omitempty"`
+		Error     *Error                `json:"error,omitempty"`
 	}
 	if err = json.Unmarshal(data, &resp); err != nil {
 		return nil, requestError(err)
