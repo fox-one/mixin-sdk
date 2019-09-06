@@ -9,20 +9,22 @@ import (
 
 var ckey cipher.Block
 
-func expendKey(key []byte) []byte {
-	for len(key) < 16 {
+func expendKey(key []byte, blocksize int) []byte {
+	if len(key) == 0 {
+		key = append(key, 0)
+	}
+
+	for len(key) < blocksize {
 		key = append(key, key...)
 	}
-	return key[:16]
+	return key[:blocksize]
 }
 
 // PKCS7Padding PKCS7补码, 可以参考下http://blog.studygolang.com/167.html
-func PKCS7Padding(data []byte) []byte {
-	blockSize := 16
-	padding := blockSize - len(data)%blockSize
+func PKCS7Padding(data []byte, blocksize int) []byte {
+	padding := blocksize - len(data)%blocksize
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
 	return append(data, padtext...)
-
 }
 
 // UnPKCS7Padding 去除PKCS7的补码
@@ -37,9 +39,17 @@ func UnPKCS7Padding(data []byte) []byte {
 }
 
 // Encrypt aes encrypt
-func Encrypt(data []byte, key, iv []byte) (string, error) {
-	key = expendKey(key)
-	iv = expendKey(iv)
+func Encrypt(data []byte, key, iv []byte, blocksizes ...int) (string, error) {
+	blocksize := 16
+	if len(blocksizes) > 0 {
+		switch blocksizes[0] {
+		case 16, 24, 32:
+			blocksize = blocksizes[0]
+		}
+	}
+
+	key = expendKey(key, blocksize)
+	iv = expendKey(iv, 16)
 
 	var err error
 	ckey, err = aes.NewCipher(key)
@@ -50,7 +60,7 @@ func Encrypt(data []byte, key, iv []byte) (string, error) {
 	encrypter := cipher.NewCBCEncrypter(ckey, iv)
 
 	// PKCS7补码
-	str := PKCS7Padding([]byte(data))
+	str := PKCS7Padding(data, 16)
 	out := make([]byte, len(str))
 
 	encrypter.CryptBlocks(out, str)
@@ -59,9 +69,17 @@ func Encrypt(data []byte, key, iv []byte) (string, error) {
 }
 
 // Decrypt aes decrypt
-func Decrypt(base64Str string, key, iv []byte) ([]byte, error) {
-	key = expendKey(key)
-	iv = expendKey(iv)
+func Decrypt(base64Str string, key, iv []byte, blocksizes ...int) ([]byte, error) {
+	blocksize := 16
+	if len(blocksizes) > 0 {
+		switch blocksizes[0] {
+		case 16, 24, 32:
+			blocksize = blocksizes[0]
+		}
+	}
+
+	key = expendKey(key, blocksize)
+	iv = expendKey(iv, 16)
 
 	var err error
 	ckey, err = aes.NewCipher(key)
