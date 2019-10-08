@@ -2,14 +2,19 @@ package messenger
 
 import (
 	"context"
+	"encoding/json"
+	"time"
+
+	"github.com/fox-one/mixin-sdk/mixin"
+	jsoniter "github.com/json-iterator/go"
 )
 
 // Participant conversation participant
 type Participant struct {
-	Type      string `json:"type"`
-	UserID    string `json:"userID"`
-	Role      string `json:"role"`
-	CreatedAt string `json:"created_at"`
+	Type      string     `json:"type,omitempty"`
+	UserID    string     `json:"user_id,omitempty"`
+	Role      string     `json:"role,omitempty"`
+	CreatedAt *time.Time `json:"created_at,omitempty"`
 }
 
 // Conversation conversation
@@ -28,6 +33,42 @@ type Conversation struct {
 }
 
 // CreateConversation crate conversation
-func (m Messenger) CreateConversation(ctx context.Context, category, participants, action, role, userID string) (*Conversation, error) {
-	return nil, nil
+func (m Messenger) CreateConversation(ctx context.Context, category, conversationID, action, role, userID string, participants []*Participant) (*Conversation, error) {
+	params := map[string]interface{}{
+		"category": category,
+	}
+	if conversationID != "" {
+		params["conversation_id"] = conversationID
+	}
+	if action != "" {
+		params["action"] = action
+	}
+	if role != "" {
+		params["role"] = role
+	}
+	if userID != "" {
+		params["user_id"] = userID
+	}
+	if len(participants) > 0 {
+		params["participants"] = participants
+	}
+	payloads, _ := jsoniter.Marshal(params)
+
+	data, err := m.Request(ctx, "POST", "/conversations", payloads)
+	if err != nil {
+		return nil, requestError(err)
+	}
+
+	var resp struct {
+		Error        mixin.Error   `json:"error,omitempty"`
+		Conversation *Conversation `json:"data,omitempty"`
+	}
+	if err = json.Unmarshal(data, &resp); err != nil {
+		return nil, requestError(err)
+	}
+	if resp.Error.Code != 0 {
+		return nil, resp.Error
+	}
+
+	return resp.Conversation, nil
 }
