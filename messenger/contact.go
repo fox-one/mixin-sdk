@@ -33,12 +33,15 @@ type Conversation struct {
 }
 
 // CreateConversation crate conversation
-func (m Messenger) CreateConversation(ctx context.Context, category, conversationID, action, role, userID string, participants []*Participant) (*Conversation, error) {
+func (m Messenger) CreateConversation(ctx context.Context, category, conversationID, name, action, role, userID string, participants []*Participant) (*Conversation, error) {
 	params := map[string]interface{}{
 		"category": category,
 	}
 	if conversationID != "" {
 		params["conversation_id"] = conversationID
+	}
+	if name != "" {
+		params["name"] = name
 	}
 	if action != "" {
 		params["action"] = action
