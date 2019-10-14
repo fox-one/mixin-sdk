@@ -33,7 +33,7 @@ func doReadTransfer(ctx context.Context, user *mixin.User, traceID string) {
 }
 
 func doReadExternal(ctx context.Context, user *mixin.User) {
-	snapshots, err := user.ReadExternal(ctx, "", "", "", "", time.Time{}, 10)
+	snapshots, err := user.ReadExternal(ctx, "", "", "", time.Time{}, 10)
 	if err != nil {
 		log.Panicln(err)
 	}

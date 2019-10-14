@@ -105,17 +105,15 @@ func (user User) ReadTransfer(ctx context.Context, traceID string) (*Snapshot, e
 }
 
 // ReadExternal read external snapshots
-func (user User) ReadExternal(ctx context.Context, assetID, publicKey, accountName, accountTag string, offset time.Time, limit int) ([]*DepositTransaction, error) {
+func (user User) ReadExternal(ctx context.Context, assetID, destination, tag string, offset time.Time, limit int) ([]*DepositTransaction, error) {
 	var paras = make([]string, 0, 12)
 	if len(assetID) > 0 {
 		paras = append(paras, "asset", assetID)
 	}
-	if len(publicKey) > 0 {
-		paras = append(paras, "public_key", publicKey)
-	} else if len(accountName) > 0 {
-		paras = append(paras, "account_name", accountName)
-		if len(accountName) > 0 {
-			paras = append(paras, "account_tag", accountTag)
+	if destination != "" {
+		paras = append(paras, "destination", destination)
+		if tag != "" {
+			paras = append(paras, "tag", tag)
 		}
 	}
 	if !offset.IsZero() {
