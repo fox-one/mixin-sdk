@@ -17,9 +17,9 @@ func doAddress(ctx context.Context, user *mixin.User, assetID, publicKey, label,
 
 func doCreateAddress(ctx context.Context, user *mixin.User, assetID, publicKey, label, pin string) string {
 	addr, err := user.CreateWithdrawAddress(ctx, mixin.WithdrawAddress{
-		AssetID:   assetID,
-		PublicKey: publicKey,
-		Label:     label,
+		AssetID:     assetID,
+		Destination: publicKey,
+		Label:       label,
 	}, pin)
 	if err != nil {
 		log.Panicln(err)
