@@ -7,9 +7,11 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/pem"
 	"io"
 	"time"
 
@@ -29,6 +31,22 @@ type User struct {
 	pinCipher  *cipher.Block
 	privateKey *rsa.PrivateKey
 	scopes     string
+}
+
+// NewUser new user
+func NewUser(userID, sessionID, sessionKey string) (*User, error) {
+	user := &User{
+		UserID:    userID,
+		SessionID: sessionID,
+	}
+
+	block, _ := pem.Decode([]byte(sessionKey))
+	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	user.SetPrivateKey(privateKey)
+	return user, nil
 }
 
 // SetPrivateKey set private key
