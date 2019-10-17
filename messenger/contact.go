@@ -75,3 +75,24 @@ func (m Messenger) CreateConversation(ctx context.Context, category, conversatio
 
 	return resp.Conversation, nil
 }
+
+// ReadConversation read conversation
+func (m Messenger) ReadConversation(ctx context.Context, conversationID string) (*Conversation, error) {
+	data, err := m.Request(ctx, "GET", "/conversations/"+conversationID, nil)
+	if err != nil {
+		return nil, requestError(err)
+	}
+
+	var resp struct {
+		Error        mixin.Error   `json:"error,omitempty"`
+		Conversation *Conversation `json:"data,omitempty"`
+	}
+	if err = json.Unmarshal(data, &resp); err != nil {
+		return nil, requestError(err)
+	}
+	if resp.Error.Code != 0 {
+		return nil, resp.Error
+	}
+
+	return resp.Conversation, nil
+}
