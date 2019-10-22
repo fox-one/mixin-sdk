@@ -3,9 +3,11 @@ package mixin
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 
 	uuid "github.com/gofrs/uuid"
+	jsoniter "github.com/json-iterator/go"
 )
 
 // RawTransaction raw transaction
@@ -53,4 +55,40 @@ func (user User) Transaction(ctx context.Context, in *TransferInput, pin string)
 		return nil, resp.Error
 	}
 	return &resp.Data, nil
+}
+
+// TransactionOutput transaction output
+type TransactionOutput struct {
+	Mask string   `json:"mask"`
+	Keys []string `json:"keys"`
+}
+
+// MakeTransactionOutput request transaction outputs for receiving assets from main net
+func (user User) MakeTransactionOutput(ctx context.Context, userIDs ...string) (*TransactionOutput, error) {
+	if len(userIDs) == 0 {
+		userIDs = []string{user.UserID}
+	}
+	bts, err := jsoniter.Marshal(userIDs)
+	if err != nil {
+		return nil, requestError(err)
+	}
+
+	data, err := user.Request(ctx, "POST", "/outputs", bts)
+	if err != nil {
+		return nil, requestError(err)
+	}
+
+	log.Println(string(data))
+
+	var resp struct {
+		Error Error              `json:"error"`
+		Data  *TransactionOutput `json:"data"`
+	}
+	err = json.Unmarshal(data, &resp)
+	if err != nil {
+		return nil, requestError(err)
+	} else if resp.Error.Code > 0 {
+		return nil, resp.Error
+	}
+	return resp.Data, nil
 }
