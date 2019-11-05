@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/fox-one/mixin-sdk/mixin"
+	"github.com/fox-one/mixin-sdk/utils"
 )
 
 // User messenger user entity
@@ -188,4 +189,24 @@ func (m Messenger) FetchFriends(ctx context.Context) ([]*User, error) {
 	}
 
 	return resp.Users, nil
+}
+
+func UserMe(ctx context.Context,accessToken string) (*User,error) {
+	result := utils.SendRequest(ctx, "/me", "GET", "", "Content-Type", "application/json", "Authorization", "Bearer "+accessToken)
+	data,err := result.Bytes()
+	if err != nil {
+		return nil,err
+	}
+
+	var resp struct {
+		User  *User        `json:"data,omitempty"`
+		Error *mixin.Error `json:"error,omitempty"`
+	}
+	if err = json.Unmarshal(data, &resp); err != nil {
+		return nil, requestError(err)
+	} else if resp.Error != nil {
+		return nil, resp.Error
+	}
+
+	return resp.User, nil
 }

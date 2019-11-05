@@ -131,6 +131,8 @@ func (b *Messenger) Loop(ctx context.Context, listener BlazeListener) error {
 	}
 	for {
 		select {
+		case <-ctx.Done():
+			return ctx.Err()
 		case <-b.mc.readDone:
 			return nil
 		case msg := <-b.mc.readBuffer:
