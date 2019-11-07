@@ -11,7 +11,6 @@ import (
 
 	"github.com/fox-one/mixin-sdk/messenger"
 	"github.com/fox-one/mixin-sdk/mixin"
-	"github.com/fox-one/mixin-sdk/utils"
 )
 
 type Handler struct {
@@ -32,7 +31,7 @@ func (h Handler) OnMessage(ctx context.Context, msgView messenger.MessageView, u
 	msg := fmt.Sprintf("I got your message, you said: %s", string(data))
 	log.Println(msg)
 
-	return h.SendPlainText(ctx, msgView, msg)
+	return nil
 }
 
 func (h Handler) Run(ctx context.Context) {
@@ -42,14 +41,6 @@ func (h Handler) Run(ctx context.Context) {
 			time.Sleep(1 * time.Second)
 		}
 	}
-}
-
-func (h Handler) Send(ctx context.Context, userId, content string) error {
-	msgView := messenger.MessageView{
-		ConversationId: utils.UniqueConversationID(ClientID, userId),
-		UserId:         userId,
-	}
-	return h.SendPlainText(ctx, msgView, content)
 }
 
 func main() {
@@ -70,9 +61,5 @@ func main() {
 	h := Handler{m}
 	ctx := context.Background()
 
-	go h.Run(ctx)
-	for {
-		h.Send(ctx, "7b3f0a95-3ee9-4c1b-8ae9-170e3877d909", "hello world")
-		time.Sleep(5 * time.Second)
-	}
+	h.Run(ctx)
 }

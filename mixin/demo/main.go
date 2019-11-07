@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"log"
+	"time"
 
 	"github.com/fox-one/mixin-sdk/mixin"
 	jsoniter "github.com/json-iterator/go"
@@ -46,9 +47,11 @@ func main() {
 
 	assetID := "965e5c6e-434c-3fa9-b780-c50f43cd955c"
 	doTransfer(ctx, user, assetID, u.UserID, "0.1", "ping", PIN)
+	time.Sleep(time.Second * 5)
 	snap := doTransfer(ctx, u, assetID, user.UserID, "0.1", "pong", p)
 
 	doWithdraw(ctx, user, assetID, publicKey1, "0.1", "ping", PIN)
+	time.Sleep(time.Second * 5)
 	doWithdraw(ctx, u, assetID, publicKey, "0.1", "pong", p)
 
 	doReadNetwork(ctx, u)
