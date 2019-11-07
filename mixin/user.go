@@ -13,10 +13,13 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"io"
+	"io/ioutil"
+	"net/http"
+	"strings"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	uuid "github.com/gofrs/uuid"
+	"github.com/gofrs/uuid"
 )
 
 // User wallet entity
@@ -140,4 +143,20 @@ func (user *User) SignToken(method, uri string, body []byte, expire ...time.Dura
 	token := jwt.NewWithClaims(jwt.SigningMethodRS512, jwtMap)
 
 	return token.SignedString(user.privateKey)
+}
+
+func (user *User) Auth(r *http.Request) (string,error) {
+	url := r.URL.String()
+	idx := strings.Index(url,r.URL.Path)
+	uri := url[idx:]
+
+	var body []byte
+	if r.GetBody != nil {
+		if rc,err := r.GetBody();err == nil {
+			defer rc.Close()
+			body,_ = ioutil.ReadAll(rc)
+		}
+	}
+
+	return user.SignToken(r.Method,uri,body,time.Minute)
 }
