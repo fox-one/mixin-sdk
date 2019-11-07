@@ -269,15 +269,13 @@ func (b *BlazeClient) SendAppButtons(ctx context.Context, conversationId, recipi
 	return nil
 }
 func (m Messenger) connectMixinBlaze() (*websocket.Conn, error) {
-	//func connectMixinBlaze(uid, sid, key string) (*websocket.Conn, error) {
-	//token, err := SignAuthenticationToken(uid, sid, key, "GET", "/", "")
 	token, err := m.SignToken("GET", "/", nil)
 	if err != nil {
 		return nil, err
 	}
 	header := make(http.Header)
 	header.Add("Authorization", "Bearer "+token)
-	u := url.URL{Scheme: "wss", Host: "blaze.mixin.one", Path: "/"}
+	u := url.URL{Scheme: "wss", Host: "mixin-blaze.zeromesh.net", Path: "/"}
 	dialer := &websocket.Dialer{
 		Subprotocols: []string{"Mixin-Blaze-1"},
 	}
