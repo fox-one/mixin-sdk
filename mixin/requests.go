@@ -34,5 +34,5 @@ func (user *User) Request(ctx context.Context, method, uri string, payload []byt
 		return nil,err
 	}
 
-	return mixin_sdk.DecodeResponse(resp)
+	return resp.Body(),nil
 }
