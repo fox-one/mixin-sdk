@@ -10,7 +10,7 @@ import (
 )
 
 // ReadNetwork read network snapshots
-func (user User) ReadNetwork(ctx context.Context, assetID string, offset time.Time, order bool, limit uint) ([]*Snapshot, error) {
+func (user *User) ReadNetwork(ctx context.Context, assetID string, offset time.Time, order bool, limit uint) ([]*Snapshot, error) {
 	uri := fmt.Sprintf("/network/snapshots?limit=%d", limit)
 	if !offset.IsZero() {
 		uri = uri + "&offset=" + offset.UTC().Format(time.RFC3339Nano)
@@ -48,7 +48,7 @@ func (user User) ReadNetwork(ctx context.Context, assetID string, offset time.Ti
 }
 
 // ReadNetworkSnapshot read snapshot with snapshot id
-func (user User) ReadNetworkSnapshot(ctx context.Context, snapshotID string) (*Snapshot, error) {
+func (user *User) ReadNetworkSnapshot(ctx context.Context, snapshotID string) (*Snapshot, error) {
 	data, err := user.Request(ctx, "GET", "/network/snapshots/"+snapshotID, nil)
 	if err != nil {
 		return nil, requestError(err)
@@ -67,7 +67,7 @@ func (user User) ReadNetworkSnapshot(ctx context.Context, snapshotID string) (*S
 }
 
 // ReadSnapshot read snapshot with snapshot id
-func (user User) ReadSnapshot(ctx context.Context, snapshotID string) (*Snapshot, error) {
+func (user *User) ReadSnapshot(ctx context.Context, snapshotID string) (*Snapshot, error) {
 	data, err := user.Request(ctx, "GET", "/snapshots/"+snapshotID, nil)
 	if err != nil {
 		return nil, requestError(err)
@@ -86,7 +86,7 @@ func (user User) ReadSnapshot(ctx context.Context, snapshotID string) (*Snapshot
 }
 
 // ReadTransfer read snapshot with trace id
-func (user User) ReadTransfer(ctx context.Context, traceID string) (*Snapshot, error) {
+func (user *User) ReadTransfer(ctx context.Context, traceID string) (*Snapshot, error) {
 	data, err := user.Request(ctx, "GET", "/transfers/trace/"+traceID, nil)
 	if err != nil {
 		return nil, requestError(err)
@@ -105,7 +105,7 @@ func (user User) ReadTransfer(ctx context.Context, traceID string) (*Snapshot, e
 }
 
 // ReadExternal read external snapshots
-func (user User) ReadExternal(ctx context.Context, assetID, destination, tag string, offset time.Time, limit int) ([]*DepositTransaction, error) {
+func (user *User) ReadExternal(ctx context.Context, assetID, destination, tag string, offset time.Time, limit int) ([]*DepositTransaction, error) {
 	var paras = make([]string, 0, 12)
 	if len(assetID) > 0 {
 		paras = append(paras, "asset", assetID)

@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
+	mixin_sdk "github.com/fox-one/mixin-sdk"
 	"github.com/fox-one/mixin-sdk/mixin"
-	"github.com/fox-one/mixin-sdk/utils"
 )
 
 // User messenger user entity
@@ -18,24 +18,26 @@ type User struct {
 	Phone          string `json:"phone,omitempty"`
 }
 
+func fetchProfile(ctx context.Context) (*User,error) {
+	resp,err := mixin_sdk.Request(ctx).Get("/me")
+	if err != nil {
+		return nil,err
+	}
+
+	var user User
+	err = mixin_sdk.UnmarshalResponse(resp,&user)
+	return &user,err
+}
+
 // FetchProfile fetch my profile
 func (m Messenger) FetchProfile(ctx context.Context) (*User, error) {
-	data, err := m.Request(ctx, "GET", "/me", nil)
-	if err != nil {
-		return nil, requestError(err)
-	}
+	ctx = mixin_sdk.WithAuth(ctx,m.User)
+	return fetchProfile(ctx)
+}
 
-	var resp struct {
-		User  *User        `json:"data,omitempty"`
-		Error *mixin.Error `json:"error,omitempty"`
-	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	} else if resp.Error != nil {
-		return nil, resp.Error
-	}
-
-	return resp.User, nil
+func UserMe(ctx context.Context,accessToken string) (*User,error) {
+	ctx = mixin_sdk.WithToken(ctx,accessToken)
+	return fetchProfile(ctx)
 }
 
 // ModifyProfile update my profile
@@ -189,24 +191,4 @@ func (m Messenger) FetchFriends(ctx context.Context) ([]*User, error) {
 	}
 
 	return resp.Users, nil
-}
-
-func UserMe(ctx context.Context,accessToken string) (*User,error) {
-	result := utils.SendRequest(ctx, "/me", "GET", "", "Content-Type", "application/json", "Authorization", "Bearer "+accessToken)
-	data,err := result.Bytes()
-	if err != nil {
-		return nil,err
-	}
-
-	var resp struct {
-		User  *User        `json:"data,omitempty"`
-		Error *mixin.Error `json:"error,omitempty"`
-	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	} else if resp.Error != nil {
-		return nil, resp.Error
-	}
-
-	return resp.User, nil
 }

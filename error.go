@@ -21,3 +21,5 @@ func createError(status,code int,description string) error {
 		Description: description,
 	}
 }
+
+// mixin error codes https://developers.mixin.one/api/alpha-mixin-network/errors/
