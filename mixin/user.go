@@ -152,7 +152,7 @@ func (user *User) Auth(r *http.Request) (string,error) {
 
 	var body []byte
 	if r.GetBody != nil {
-		if rc,err := r.GetBody();err == nil {
+		if rc,_ := r.GetBody();rc != nil {
 			defer rc.Close()
 			body,_ = ioutil.ReadAll(rc)
 		}
