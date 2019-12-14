@@ -2,10 +2,8 @@ package messenger
 
 import (
 	"context"
-	"encoding/json"
 
-	mixin_sdk "github.com/fox-one/mixin-sdk"
-	"github.com/fox-one/mixin-sdk/mixin"
+	mixinsdk "github.com/fox-one/mixin-sdk"
 )
 
 // User messenger user entity
@@ -18,25 +16,25 @@ type User struct {
 	Phone          string `json:"phone,omitempty"`
 }
 
-func fetchProfile(ctx context.Context) (*User,error) {
-	resp,err := mixin_sdk.Request(ctx).Get("/me")
+func fetchProfile(ctx context.Context) (*User, error) {
+	resp, err := mixinsdk.Request(ctx).Get("/me")
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	var user User
-	err = mixin_sdk.UnmarshalResponse(resp,&user)
-	return &user,err
+	err = mixinsdk.UnmarshalResponse(resp, &user)
+	return &user, err
 }
 
 // FetchProfile fetch my profile
 func (m Messenger) FetchProfile(ctx context.Context) (*User, error) {
-	ctx = mixin_sdk.WithAuth(ctx,m.User)
+	ctx = mixinsdk.WithAuth(ctx, m.User)
 	return fetchProfile(ctx)
 }
 
-func UserMe(ctx context.Context,accessToken string) (*User,error) {
-	ctx = mixin_sdk.WithToken(ctx,accessToken)
+func UserMe(ctx context.Context, accessToken string) (*User, error) {
+	ctx = mixinsdk.WithToken(ctx, accessToken)
 	return fetchProfile(ctx)
 }
 
@@ -49,27 +47,12 @@ func (m Messenger) ModifyProfile(ctx context.Context, fullname, avatarBase64 str
 	if len(avatarBase64) > 0 {
 		paras["avatar_base64"] = avatarBase64
 	}
-	payload, err := json.Marshal(paras)
-	if err != nil {
-		return nil, requestError(err)
-	}
 
-	data, err := m.Request(ctx, "POST", "/me", payload)
-	if err != nil {
-		return nil, requestError(err)
+	var user User
+	if err := m.SendRequest(ctx, "POST", "/me", paras, &user); err != nil {
+		return nil, err
 	}
-
-	var resp struct {
-		User  *User        `json:"data,omitempty"`
-		Error *mixin.Error `json:"error,omitempty"`
-	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	} else if resp.Error != nil {
-		return nil, resp.Error
-	}
-
-	return resp.User, nil
+	return &user, nil
 }
 
 // ModifyPreference update my preference
@@ -81,27 +64,12 @@ func (m Messenger) ModifyPreference(ctx context.Context, receiveMessageSource, a
 	if len(acceptConversationSource) > 0 {
 		paras["accept_conversation_source"] = acceptConversationSource
 	}
-	payload, err := json.Marshal(paras)
-	if err != nil {
-		return nil, requestError(err)
-	}
 
-	data, err := m.Request(ctx, "POST", "/me/preferences", payload)
-	if err != nil {
-		return nil, requestError(err)
+	var user User
+	if err := m.SendRequest(ctx, "POST", "/me/preferences", paras, &user); err != nil {
+		return nil, err
 	}
-
-	var resp struct {
-		User  *User        `json:"data,omitempty"`
-		Error *mixin.Error `json:"error,omitempty"`
-	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	} else if resp.Error != nil {
-		return nil, resp.Error
-	}
-
-	return resp.User, nil
+	return &user, nil
 }
 
 // FetchUsers fetch users
@@ -110,85 +78,36 @@ func (m Messenger) FetchUsers(ctx context.Context, userIDS ...string) ([]*User, 
 		return []*User{}, nil
 	}
 
-	payload, err := json.Marshal(userIDS)
-	if err != nil {
-		return nil, requestError(err)
+	var users []*User
+	if err := m.SendRequest(ctx, "POST", "/users/fetch", userIDS, &users); err != nil {
+		return nil, err
 	}
-
-	data, err := m.Request(ctx, "POST", "/users/fetch", payload)
-	if err != nil {
-		return nil, requestError(err)
-	}
-
-	var resp struct {
-		Users []*User      `json:"data,omitempty"`
-		Error *mixin.Error `json:"error,omitempty"`
-	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	} else if resp.Error != nil {
-		return nil, resp.Error
-	}
-
-	return resp.Users, nil
+	return users, nil
 }
 
 // FetchUser fetch user
 func (m Messenger) FetchUser(ctx context.Context, userID string) (*User, error) {
-	data, err := m.Request(ctx, "GET", "/users/"+userID, nil)
-	if err != nil {
-		return nil, requestError(err)
+	var user User
+	if err := m.SendRequest(ctx, "GET", "/users/"+userID, nil, &user); err != nil {
+		return nil, err
 	}
-
-	var resp struct {
-		User  *User        `json:"data,omitempty"`
-		Error *mixin.Error `json:"error,omitempty"`
-	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	} else if resp.Error != nil {
-		return nil, resp.Error
-	}
-
-	return resp.User, nil
+	return &user, nil
 }
 
 // SearchUser search user; q is String: Mixin Id or Phone Numbe
 func (m Messenger) SearchUser(ctx context.Context, q string) (*User, error) {
-	data, err := m.Request(ctx, "GET", "/search/"+q, nil)
-	if err != nil {
-		return nil, requestError(err)
+	var user User
+	if err := m.SendRequest(ctx, "GET", "/search/"+q, nil, &user); err != nil {
+		return nil, err
 	}
-
-	var resp struct {
-		User  *User        `json:"data,omitempty"`
-		Error *mixin.Error `json:"error,omitempty"`
-	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	} else if resp.Error != nil {
-		return nil, resp.Error
-	}
-
-	return resp.User, nil
+	return &user, nil
 }
 
 // FetchFriends fetch friends
 func (m Messenger) FetchFriends(ctx context.Context) ([]*User, error) {
-	data, err := m.Request(ctx, "GET", "/friends", nil)
-	if err != nil {
-		return nil, requestError(err)
+	var users []*User
+	if err := m.SendRequest(ctx, "GET", "/friends", nil, &users); err != nil {
+		return nil, err
 	}
-
-	var resp struct {
-		Users []*User      `json:"data,omitempty"`
-		Error *mixin.Error `json:"error,omitempty"`
-	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	} else if resp.Error != nil {
-		return nil, resp.Error
-	}
-
-	return resp.Users, nil
+	return users, nil
 }

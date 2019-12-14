@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fox-one/mixin-sdk/mixin"
+	mixinsdk "github.com/fox-one/mixin-sdk"
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/websocket"
 )
@@ -40,7 +40,7 @@ type BlazeMessage struct {
 	Action string                 `json:"action"`
 	Params map[string]interface{} `json:"params,omitempty"`
 	Data   json.RawMessage        `json:"data,omitempty"`
-	Error  *mixin.Error           `json:"error,omitempty"`
+	Error  *mixinsdk.Error        `json:"error,omitempty"`
 }
 
 type MessageView struct {

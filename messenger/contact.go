@@ -2,11 +2,7 @@ package messenger
 
 import (
 	"context"
-	"encoding/json"
 	"time"
-
-	"github.com/fox-one/mixin-sdk/mixin"
-	jsoniter "github.com/json-iterator/go"
 )
 
 // Participant conversation participant
@@ -55,44 +51,19 @@ func (m Messenger) CreateConversation(ctx context.Context, category, conversatio
 	if len(participants) > 0 {
 		params["participants"] = participants
 	}
-	payloads, _ := jsoniter.Marshal(params)
 
-	data, err := m.Request(ctx, "POST", "/conversations", payloads)
-	if err != nil {
-		return nil, requestError(err)
+	var conversation Conversation
+	if err := m.SendRequest(ctx, "POST", "/conversations", params, &conversation); err != nil {
+		return nil, err
 	}
-
-	var resp struct {
-		Error        mixin.Error   `json:"error,omitempty"`
-		Conversation *Conversation `json:"data,omitempty"`
-	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	}
-	if resp.Error.Code != 0 {
-		return nil, resp.Error
-	}
-
-	return resp.Conversation, nil
+	return &conversation, nil
 }
 
 // ReadConversation read conversation
 func (m Messenger) ReadConversation(ctx context.Context, conversationID string) (*Conversation, error) {
-	data, err := m.Request(ctx, "GET", "/conversations/"+conversationID, nil)
-	if err != nil {
-		return nil, requestError(err)
+	var conversation Conversation
+	if err := m.SendRequest(ctx, "GET", "/conversations/"+conversationID, nil, &conversation); err != nil {
+		return nil, err
 	}
-
-	var resp struct {
-		Error        mixin.Error   `json:"error,omitempty"`
-		Conversation *Conversation `json:"data,omitempty"`
-	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	}
-	if resp.Error.Code != 0 {
-		return nil, resp.Error
-	}
-
-	return resp.Conversation, nil
+	return &conversation, nil
 }

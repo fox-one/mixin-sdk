@@ -2,9 +2,6 @@ package messenger
 
 import (
 	"context"
-	"encoding/json"
-
-	"github.com/fox-one/mixin-sdk/mixin"
 )
 
 type Message struct {
@@ -18,34 +15,13 @@ type Message struct {
 }
 
 func (m Messenger) SendMessages(ctx context.Context, messages ...Message) error {
-	var body []byte
-	var err error
-	switch len(messages) {
-	case 0:
+	if len(messages) == 0 {
 		return nil
-	case 1:
-		body, err = json.Marshal(messages[0])
-	default:
-		body, err = json.Marshal(messages)
 	}
 
-	if err != nil {
-		return err
+	var paras interface{} = messages
+	if len(messages) == 1 {
+		paras = messages[0]
 	}
-
-	data, err := m.Request(ctx, "POST", "/messages", body)
-	if err != nil {
-		return requestError(err)
-	}
-
-	var resp struct {
-		Error mixin.Error `json:"error,omitempty"`
-	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return requestError(err)
-	}
-	if resp.Error.Code != 0 {
-		return resp.Error
-	}
-	return nil
+	return m.SendRequest(ctx, "POST", "/messages", paras, nil)
 }

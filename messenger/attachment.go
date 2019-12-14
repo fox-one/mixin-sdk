@@ -2,10 +2,8 @@ package messenger
 
 import (
 	"context"
-	"encoding/json"
 
-	"github.com/fox-one/mixin-sdk/mixin"
-	"github.com/fox-one/mixin-sdk/utils"
+	mixinsdk "github.com/fox-one/mixin-sdk"
 )
 
 // Attachment attachment
@@ -17,22 +15,11 @@ type Attachment struct {
 
 // CreateAttachment create attachment
 func (m Messenger) CreateAttachment(ctx context.Context) (*Attachment, error) {
-	data, err := m.Request(ctx, "POST", "/attachment", nil)
-	if err != nil {
-		return nil, requestError(err)
+	var attachment Attachment
+	if err := m.SendRequest(ctx, "POST", "/attachments", nil, &attachment); err != nil {
+		return nil, err
 	}
-
-	var resp struct {
-		Attachment *Attachment  `json:"data"`
-		Error      *mixin.Error `json:"error,omitempty"`
-	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	} else if resp.Error != nil {
-		return nil, resp.Error
-	}
-
-	return resp.Attachment, nil
+	return &attachment, nil
 }
 
 // Upload upload files
@@ -42,13 +29,15 @@ func (m Messenger) Upload(ctx context.Context, file []byte) (string, string, err
 		return "", "", err
 	}
 
-	req, err := utils.NewRequest(attachment.UploadURL, "PUT", string(file), "x-amz-acl", "public-read")
+	resp, err := mixinsdk.Request(ctx).SetBody(string(file)).
+		SetHeader("Content-Type", "multipart/form-data").
+		SetHeader("x-amz-acl", "public-read").
+		Put(attachment.UploadURL)
 	if err != nil {
 		return "", "", err
 	}
 
-	result := utils.DoRequest(req)
-	if err := result.Err(); err != nil {
+	if _, err := mixinsdk.DecodeResponse(resp); err != nil {
 		return "", "", err
 	}
 	return attachment.AttachmentID, attachment.ViewURL, nil

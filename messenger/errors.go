@@ -1,17 +1,11 @@
 package messenger
 
-import "github.com/fox-one/mixin-sdk/mixin"
+import (
+	mixinsdk "github.com/fox-one/mixin-sdk"
+)
 
-func requestError(err error) *mixin.Error {
-	return &mixin.Error{
-		Status:      mixin.RequestFailed,
-		Code:        504,
-		Description: err.Error(),
-	}
-}
-
-func ServerError(err error) *mixin.Error {
-	return &mixin.Error{
+func ServerError(err error) error {
+	return &mixinsdk.Error{
 		Status:      2000000,
 		Code:        500,
 		Description: err.Error(),
