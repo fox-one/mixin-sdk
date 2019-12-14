@@ -103,14 +103,8 @@ func ReadSnapshot(ctx context.Context, snapshotID, accessToken string) (*Snapsho
 
 // ReadTransfer read snapshot with trace id
 func (user *User) ReadTransfer(ctx context.Context, traceID string) (*Snapshot, error) {
-	ctx = mixinsdk.WithAuth(ctx, user)
-	resp, err := mixinsdk.Request(ctx).Get("/transfers/trace/" + traceID)
-	if err != nil {
-		return nil, err
-	}
-
 	var snapshot Snapshot
-	if err := mixinsdk.UnmarshalResponse(resp, &snapshot); err != nil {
+	if err := user.SendRequest(ctx, "GET", "/transfers/trace/"+traceID, nil, &snapshot); err != nil {
 		return nil, err
 	}
 	return &snapshot, nil

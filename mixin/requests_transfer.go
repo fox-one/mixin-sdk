@@ -2,7 +2,7 @@ package mixin
 
 import (
 	"context"
-	"encoding/json"
+	"strings"
 
 	"github.com/fox-one/mixin-sdk/utils"
 	uuid "github.com/gofrs/uuid"
@@ -50,31 +50,17 @@ func (input TransferInput) verify(snapshot Snapshot) bool {
 
 // VerifyPayment verify payment
 //	asset_id, opponent_id, amount, trace_id
-func (user User) VerifyPayment(ctx context.Context, input *TransferInput) (bool, error) {
-	paras, err := json.Marshal(input)
-	if err != nil {
-		return false, requestError(err)
-	}
-	data, err := user.Request(ctx, "POST", "/payments", paras)
-	if err != nil {
-		return false, requestError(err)
-	}
-
+func (user *User) VerifyPayment(ctx context.Context, input *TransferInput) (bool, error) {
 	var resp struct {
-		Data *struct {
-			User   *User  `json:"receipient"`
-			Amount string `json:"amount"`
-			Status string `json:"status"`
-		} `json:"data,omitempty"`
-		Error *Error `json:"error,omitempty"`
+		User   *User  `json:"receipient"`
+		Amount string `json:"amount"`
+		Status string `json:"status"`
 	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return false, requestError(err)
-	} else if resp.Error != nil {
-		return false, resp.Error
+	if err := user.SendRequest(ctx, "POST", "/payments", input, &resp); err != nil {
+		return false, err
 	}
 
-	if resp.Data.Amount != input.Amount || resp.Data.Status != "paid" {
+	if resp.Amount != input.Amount || strings.ToLower(resp.Status) != "paid" {
 		return false, nil
 	}
 
@@ -83,35 +69,25 @@ func (user User) VerifyPayment(ctx context.Context, input *TransferInput) (bool,
 
 // Transfer transfer to account
 //	asset_id, opponent_id, amount, traceID, memo
-func (user User) Transfer(ctx context.Context, input *TransferInput, pin string) (*Snapshot, error) {
+func (user *User) Transfer(ctx context.Context, input *TransferInput, pin string) (*Snapshot, error) {
 	if len(input.TraceID) == 0 {
 		input.TraceID = uuid.Must(uuid.NewV4()).String()
 	}
-	paras := utils.UnselectFields(input)
-	data, err := user.RequestWithPIN(ctx, "POST", "/transfers", paras, pin)
-	if err != nil {
-		return nil, requestError(err)
-	}
 
 	var resp struct {
-		Snapshot *struct {
-			*Snapshot
-			Memo string `json:"memo,omitempty"`
-		} `json:"data,omitempty"`
-		Error *Error `json:"error,omitempty"`
+		*Snapshot
+		Memo string `json:"memo,omitempty"`
 	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	} else if resp.Error != nil {
-		return nil, resp.Error
+	if err := user.SendRequestWithPIN(ctx, "POST", "/transfers", utils.UnselectFields(input), pin, &resp); err != nil {
+		return nil, err
 	}
 
-	resp.Snapshot.Data = resp.Snapshot.Memo
-	if !input.verify(*resp.Snapshot.Snapshot) {
+	resp.Snapshot.Data = resp.Memo
+	if !input.verify(*resp.Snapshot) {
 		return nil, traceError()
 	}
 
-	return resp.Snapshot.Snapshot, nil
+	return resp.Snapshot, nil
 }
 
 // Withdraw withdraw to address
@@ -120,29 +96,19 @@ func (user User) Withdraw(ctx context.Context, input *TransferInput, pin string)
 	if len(input.TraceID) == 0 {
 		input.TraceID = uuid.Must(uuid.NewV4()).String()
 	}
-	paras := utils.UnselectFields(input)
-	data, err := user.RequestWithPIN(ctx, "POST", "/withdrawals", paras, pin)
-	if err != nil {
-		return nil, requestError(err)
-	}
 
 	var resp struct {
-		Snapshot *struct {
-			*Snapshot
-			Memo string `json:"memo,omitempty"`
-		} `json:"data,omitempty"`
-		Error *Error `json:"error,omitempty"`
+		*Snapshot
+		Memo string `json:"memo,omitempty"`
 	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	} else if resp.Error != nil {
-		return nil, resp.Error
+	if err := user.SendRequestWithPIN(ctx, "POST", "/withdrawals", utils.UnselectFields(input), pin, &resp); err != nil {
+		return nil, err
 	}
 
-	resp.Snapshot.Data = resp.Snapshot.Memo
-	if !input.verify(*resp.Snapshot.Snapshot) {
+	resp.Snapshot.Data = resp.Memo
+	if !input.verify(*resp.Snapshot) {
 		return nil, traceError()
 	}
 
-	return resp.Snapshot.Snapshot, nil
+	return resp.Snapshot, nil
 }

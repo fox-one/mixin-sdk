@@ -2,8 +2,8 @@ package mixin
 
 import (
 	"context"
-	"encoding/json"
 
+	mixinsdk "github.com/fox-one/mixin-sdk"
 	"github.com/shopspring/decimal"
 )
 
@@ -24,20 +24,15 @@ type NetworkInfo struct {
 }
 
 // ReadNetworkInfo read mixin network
-func (user User) ReadNetworkInfo(ctx context.Context) (*NetworkInfo, error) {
-	data, err := user.Request(ctx, "GET", "/network", nil)
+func ReadNetworkInfo(ctx context.Context) (*NetworkInfo, error) {
+	resp, err := mixinsdk.Request(ctx).Get("/network")
 	if err != nil {
-		return nil, requestError(err)
+		return nil, err
 	}
 
-	var resp struct {
-		NetworkInfo *NetworkInfo `json:"data,omitempty"`
-		Error       *Error       `json:"error,omitempty"`
+	var info NetworkInfo
+	if err := mixinsdk.UnmarshalResponse(resp, &info); err != nil {
+		return nil, err
 	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	} else if resp.Error != nil {
-		return nil, resp.Error
-	}
-	return resp.NetworkInfo, nil
+	return &info, nil
 }

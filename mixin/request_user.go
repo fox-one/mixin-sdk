@@ -5,45 +5,25 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
-	"encoding/json"
-	"fmt"
 )
 
 // CreateUser create a new wallet user
-func (user User) CreateUser(ctx context.Context, privateKey *rsa.PrivateKey, fullname string) (*User, error) {
+func (user *User) CreateUser(ctx context.Context, privateKey *rsa.PrivateKey, fullname string) (*User, error) {
 	pbts, err := x509.MarshalPKIXPublicKey(privateKey.Public())
 	if err != nil {
-		return nil, requestError(err)
+		return nil, err
 	}
 
-	payload, err := json.Marshal(map[string]interface{}{
+	paras := map[string]interface{}{
 		"session_secret": base64.StdEncoding.EncodeToString(pbts),
 		"full_name":      fullname,
-	})
-	if err != nil {
-		return nil, requestError(err)
 	}
 
-	data, err := user.Request(ctx, "POST", "/users", payload)
-	if err != nil {
-		return nil, requestError(err)
+	var u User
+	if err := user.SendRequest(ctx, "POST", "/users", paras, &u); err != nil {
+		return nil, err
 	}
 
-	var resp struct {
-		User  *User  `json:"data"`
-		Error *Error `json:"error"`
-	}
-
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	} else if resp.Error != nil {
-		return nil, resp.Error
-	}
-
-	if len(resp.User.UserID) == 0 || len(resp.User.SessionID) == 0 || len(resp.User.PINToken) == 0 {
-		return nil, requestError(fmt.Errorf("create mixin user failed"))
-	}
-
-	resp.User.privateKey = privateKey
-	return resp.User, nil
+	u.privateKey = privateKey
+	return &u, nil
 }

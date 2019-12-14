@@ -43,13 +43,13 @@ func main() {
 	doAssets(ctx, u)
 
 	assetID := "965e5c6e-434c-3fa9-b780-c50f43cd955c"
-	doTransfer(ctx, user, assetID, u.UserID, "0.1", "ping", PIN)
+	doTransfer(ctx, user, assetID, u.UserID, "0.0001", "ping", PIN)
 	time.Sleep(time.Second * 5)
-	snap := doTransfer(ctx, u, assetID, user.UserID, "0.1", "pong", p)
+	snap := doTransfer(ctx, u, assetID, user.UserID, "0.0001", "pong", p)
 
-	doWithdraw(ctx, user, assetID, publicKey1, "0.1", "ping", PIN)
+	doWithdraw(ctx, user, assetID, publicKey1, "0.01", "ping", PIN)
 	time.Sleep(time.Second * 5)
-	doWithdraw(ctx, u, assetID, publicKey, "0.1", "pong", p)
+	doWithdraw(ctx, u, assetID, publicKey, "0.01", "pong", p)
 
 	doReadNetwork(ctx)
 	doUserReadNetwork(ctx, u)
@@ -61,7 +61,7 @@ func main() {
 
 	doReadExternal(ctx)
 
-	doReadNetworkInfo(ctx, user)
+	doReadNetworkInfo(ctx)
 
 	doTransaction(ctx, user, "965e5c6e-434c-3fa9-b780-c50f43cd955c", "XINT55hZYxzrtqJsWViUbyoxytJ6RoKUZfpnSCQTbgX8fjcdQ7GwjRySLxiPMWxAMhoN6KPa7SFkyv9FQXC3fGJuKHLf3est", "1", "test", PIN)
 }

@@ -7,8 +7,8 @@ import (
 	"github.com/fox-one/mixin-sdk/mixin"
 )
 
-func doReadNetworkInfo(ctx context.Context, user *mixin.User) {
-	network, err := user.ReadNetworkInfo(ctx)
+func doReadNetworkInfo(ctx context.Context) {
+	network, err := mixin.ReadNetworkInfo(ctx)
 	if err != nil {
 		log.Panicln(err)
 	}

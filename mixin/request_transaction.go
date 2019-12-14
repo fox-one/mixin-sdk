@@ -2,12 +2,9 @@ package mixin
 
 import (
 	"context"
-	"encoding/json"
-	"log"
 	"time"
 
 	uuid "github.com/gofrs/uuid"
-	jsoniter "github.com/json-iterator/go"
 )
 
 // RawTransaction raw transaction
@@ -27,7 +24,7 @@ type RawTransaction struct {
 }
 
 // Transaction do transaction to mixin main net
-func (user User) Transaction(ctx context.Context, in *TransferInput, pin string) (*RawTransaction, error) {
+func (user *User) Transaction(ctx context.Context, in *TransferInput, pin string) (*RawTransaction, error) {
 	if in.TraceID == "" {
 		in.TraceID = uuid.Must(uuid.NewV4()).String()
 	}
@@ -39,22 +36,12 @@ func (user User) Transaction(ctx context.Context, in *TransferInput, pin string)
 		"trace_id":     in.TraceID,
 		"memo":         in.Memo,
 	}
-	data, err := user.RequestWithPIN(ctx, "POST", "/transactions", paras, pin)
-	if err != nil {
-		return nil, requestError(err)
-	}
 
-	var resp struct {
-		Error Error          `json:"error"`
-		Data  RawTransaction `json:"data"`
+	var resp RawTransaction
+	if err := user.SendRequestWithPIN(ctx, "POST", "/transactions", paras, pin, &resp); err != nil {
+		return nil, err
 	}
-	err = json.Unmarshal(data, &resp)
-	if err != nil {
-		return nil, requestError(err)
-	} else if resp.Error.Code > 0 {
-		return nil, resp.Error
-	}
-	return &resp.Data, nil
+	return &resp, nil
 }
 
 // TransactionOutput transaction output
@@ -64,31 +51,14 @@ type TransactionOutput struct {
 }
 
 // MakeTransactionOutput request transaction outputs for receiving assets from main net
-func (user User) MakeTransactionOutput(ctx context.Context, userIDs ...string) (*TransactionOutput, error) {
+func (user *User) MakeTransactionOutput(ctx context.Context, userIDs ...string) (*TransactionOutput, error) {
 	if len(userIDs) == 0 {
 		userIDs = []string{user.UserID}
 	}
-	bts, err := jsoniter.Marshal(userIDs)
-	if err != nil {
-		return nil, requestError(err)
-	}
 
-	data, err := user.Request(ctx, "POST", "/outputs", bts)
-	if err != nil {
-		return nil, requestError(err)
+	var resp TransactionOutput
+	if err := user.SendRequest(ctx, "POST", "/outputs", userIDs, &resp); err != nil {
+		return nil, err
 	}
-
-	log.Println(string(data))
-
-	var resp struct {
-		Error Error              `json:"error"`
-		Data  *TransactionOutput `json:"data"`
-	}
-	err = json.Unmarshal(data, &resp)
-	if err != nil {
-		return nil, requestError(err)
-	} else if resp.Error.Code > 0 {
-		return nil, resp.Error
-	}
-	return resp.Data, nil
+	return &resp, nil
 }
