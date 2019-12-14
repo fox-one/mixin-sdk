@@ -7,17 +7,15 @@ import (
 	"log"
 	"time"
 
-	"github.com/fox-one/mixin-sdk/messenger"
+	sdk "github.com/fox-one/mixin-sdk"
 )
 
-type Handler struct {
-	*messenger.Messenger
-}
+type Handler struct{}
 
-func (h Handler) OnMessage(ctx context.Context, msgView messenger.MessageView, userId string) error {
+func (h Handler) OnMessage(ctx context.Context, msgView *sdk.MessageView, userID string) error {
 	log.Println("I received a msg", msgView)
 
-	if msgView.Category != messenger.MessageCategoryPlainText {
+	if msgView.Category != sdk.MessageCategoryPlainText {
 		return nil
 	}
 
@@ -31,9 +29,15 @@ func (h Handler) OnMessage(ctx context.Context, msgView messenger.MessageView, u
 	return nil
 }
 
-func (h Handler) Run(ctx context.Context) {
+func (h Handler) Run(ctx context.Context, user *sdk.User) {
 	for {
-		if err := h.Loop(ctx, h); err != nil {
+		select {
+		case <-ctx.Done():
+			break
+
+		default:
+		}
+		if err := sdk.NewBlazeClient(user).Loop(ctx, h); err != nil {
 			log.Println("something is wrong", err)
 			time.Sleep(1 * time.Second)
 		}

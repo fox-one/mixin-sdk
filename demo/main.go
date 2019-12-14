@@ -70,11 +70,13 @@ func main() {
 	// Messenger
 
 	conversation := doCreateConversation(ctx, user)
-	doMessage(ctx, user, sdk.Message{
+	doMessage(ctx, user, sdk.MessageRequest{
 		ConversationID: conversation.ConversationID,
 		MessageID:      uuid.Must(uuid.NewV4()).String(),
 		Category:       "PLAIN_TEXT",
 		Data:           base64.StdEncoding.EncodeToString([]byte("Just A Test")),
 	})
 	doReadConversation(ctx, user, conversation.ConversationID)
+
+	Handler{}.Run(ctx, user)
 }
