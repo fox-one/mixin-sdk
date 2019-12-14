@@ -1,4 +1,4 @@
-package messenger
+package sdk
 
 import (
 	"context"
@@ -14,7 +14,7 @@ type Message struct {
 	RepresentativeID string `json:"representative_id,omitempty"`
 }
 
-func (m Messenger) SendMessages(ctx context.Context, messages ...Message) error {
+func (user *User) SendMessages(ctx context.Context, messages ...Message) error {
 	if len(messages) == 0 {
 		return nil
 	}
@@ -23,5 +23,5 @@ func (m Messenger) SendMessages(ctx context.Context, messages ...Message) error 
 	if len(messages) == 1 {
 		paras = messages[0]
 	}
-	return m.SendRequest(ctx, "POST", "/messages", paras, nil)
+	return user.Request(ctx, "POST", "/messages", paras, nil)
 }

@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"log"
 	"time"
 
 	sdk "github.com/fox-one/mixin-sdk"
+	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -64,4 +66,15 @@ func main() {
 	doReadNetworkInfo(ctx)
 
 	doTransaction(ctx, user, "965e5c6e-434c-3fa9-b780-c50f43cd955c", "XINT55hZYxzrtqJsWViUbyoxytJ6RoKUZfpnSCQTbgX8fjcdQ7GwjRySLxiPMWxAMhoN6KPa7SFkyv9FQXC3fGJuKHLf3est", "1", "test", PIN)
+
+	// Messenger
+
+	conversation := doCreateConversation(ctx, user)
+	doMessage(ctx, user, sdk.Message{
+		ConversationID: conversation.ConversationID,
+		MessageID:      uuid.Must(uuid.NewV4()).String(),
+		Category:       "PLAIN_TEXT",
+		Data:           base64.StdEncoding.EncodeToString([]byte("Just A Test")),
+	})
+	doReadConversation(ctx, user, conversation.ConversationID)
 }

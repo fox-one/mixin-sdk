@@ -1,4 +1,4 @@
-package messenger
+package sdk
 
 import (
 	"context"
@@ -15,21 +15,21 @@ type Participant struct {
 
 // Conversation conversation
 type Conversation struct {
-	ConversationID string `json:"conversation_id"`
-	CreatorID      string `json:"creator_id"`
+	ConversationID string `json:"conversation_id,omitempty"`
+	CreatorID      string `json:"creator_id,omitempty"`
 	Category       string `json:"category,omitempty"`
 	Name           string `json:"name,omitempty"`
 	IconURL        string `json:"icon_url,omitempty"`
 	Announcement   string `json:"announcement,omitempty"`
-	CreatedAt      string `json:"created_at"`
+	CreatedAt      string `json:"created_at,omitempty"`
 	CodeID         string `json:"code_id,omitempty"`
 	CodeURL        string `json:"code_url,omitempty"`
 
-	Participants []*Participant `json:"participants"`
+	Participants []*Participant `json:"participants,omitempty"`
 }
 
 // CreateConversation crate conversation
-func (m Messenger) CreateConversation(ctx context.Context, category, conversationID, name, action, role, userID string, participants []*Participant) (*Conversation, error) {
+func (user *User) CreateConversation(ctx context.Context, category, conversationID, name, action, role, userID string, participants []*Participant) (*Conversation, error) {
 	params := map[string]interface{}{
 		"category": category,
 	}
@@ -53,16 +53,16 @@ func (m Messenger) CreateConversation(ctx context.Context, category, conversatio
 	}
 
 	var conversation Conversation
-	if err := m.SendRequest(ctx, "POST", "/conversations", params, &conversation); err != nil {
+	if err := user.Request(ctx, "POST", "/conversations", params, &conversation); err != nil {
 		return nil, err
 	}
 	return &conversation, nil
 }
 
 // ReadConversation read conversation
-func (m Messenger) ReadConversation(ctx context.Context, conversationID string) (*Conversation, error) {
+func (user *User) ReadConversation(ctx context.Context, conversationID string) (*Conversation, error) {
 	var conversation Conversation
-	if err := m.SendRequest(ctx, "GET", "/conversations/"+conversationID, nil, &conversation); err != nil {
+	if err := user.Request(ctx, "GET", "/conversations/"+conversationID, nil, &conversation); err != nil {
 		return nil, err
 	}
 	return &conversation, nil

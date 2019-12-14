@@ -1,9 +1,7 @@
-package messenger
+package sdk
 
 import (
 	"context"
-
-	mixinsdk "github.com/fox-one/mixin-sdk"
 )
 
 // Attachment attachment
@@ -14,22 +12,22 @@ type Attachment struct {
 }
 
 // CreateAttachment create attachment
-func (m Messenger) CreateAttachment(ctx context.Context) (*Attachment, error) {
+func (user *User) CreateAttachment(ctx context.Context) (*Attachment, error) {
 	var attachment Attachment
-	if err := m.SendRequest(ctx, "POST", "/attachments", nil, &attachment); err != nil {
+	if err := user.Request(ctx, "POST", "/attachments", nil, &attachment); err != nil {
 		return nil, err
 	}
 	return &attachment, nil
 }
 
 // Upload upload files
-func (m Messenger) Upload(ctx context.Context, file []byte) (string, string, error) {
-	attachment, err := m.CreateAttachment(ctx)
+func (user *User) Upload(ctx context.Context, file []byte) (string, string, error) {
+	attachment, err := user.CreateAttachment(ctx)
 	if err != nil {
 		return "", "", err
 	}
 
-	resp, err := mixinsdk.Request(ctx).SetBody(string(file)).
+	resp, err := Request(ctx).SetBody(file).
 		SetHeader("Content-Type", "multipart/form-data").
 		SetHeader("x-amz-acl", "public-read").
 		Put(attachment.UploadURL)
@@ -37,7 +35,7 @@ func (m Messenger) Upload(ctx context.Context, file []byte) (string, string, err
 		return "", "", err
 	}
 
-	if _, err := mixinsdk.DecodeResponse(resp); err != nil {
+	if _, err := DecodeResponse(resp); err != nil {
 		return "", "", err
 	}
 	return attachment.AttachmentID, attachment.ViewURL, nil
