@@ -1,4 +1,4 @@
-package mixin
+package sdk
 
 import (
 	"context"
@@ -23,6 +23,14 @@ type RawTransaction struct {
 	SnapshotAt      time.Time `json:"snapshot_at"`
 }
 
+// TransactionOutput transaction output
+type TransactionOutput struct {
+	Mask string   `json:"mask"`
+	Keys []string `json:"keys"`
+}
+
+// API
+
 // Transaction do transaction to mixin main net
 func (user *User) Transaction(ctx context.Context, in *TransferInput, pin string) (*RawTransaction, error) {
 	if in.TraceID == "" {
@@ -38,16 +46,10 @@ func (user *User) Transaction(ctx context.Context, in *TransferInput, pin string
 	}
 
 	var resp RawTransaction
-	if err := user.SendRequestWithPIN(ctx, "POST", "/transactions", paras, pin, &resp); err != nil {
+	if err := user.RequestWithPIN(ctx, "POST", "/transactions", paras, pin, &resp); err != nil {
 		return nil, err
 	}
 	return &resp, nil
-}
-
-// TransactionOutput transaction output
-type TransactionOutput struct {
-	Mask string   `json:"mask"`
-	Keys []string `json:"keys"`
 }
 
 // MakeTransactionOutput request transaction outputs for receiving assets from main net
@@ -57,7 +59,7 @@ func (user *User) MakeTransactionOutput(ctx context.Context, userIDs ...string) 
 	}
 
 	var resp TransactionOutput
-	if err := user.SendRequest(ctx, "POST", "/outputs", userIDs, &resp); err != nil {
+	if err := user.Request(ctx, "POST", "/outputs", userIDs, &resp); err != nil {
 		return nil, err
 	}
 	return &resp, nil

@@ -4,10 +4,10 @@ import (
 	"context"
 	"log"
 
-	"github.com/fox-one/mixin-sdk/mixin"
+	sdk "github.com/fox-one/mixin-sdk"
 )
 
-func doAddress(ctx context.Context, user *mixin.User, assetID, publicKey, label, pin string) {
+func doAddress(ctx context.Context, user *sdk.User, assetID, publicKey, label, pin string) {
 	addrID := doCreateAddress(ctx, user, assetID, publicKey, label, pin)
 
 	doAssetAddresses(ctx, user, assetID)
@@ -15,8 +15,8 @@ func doAddress(ctx context.Context, user *mixin.User, assetID, publicKey, label,
 	doDeleteAddress(ctx, user, addrID, pin)
 }
 
-func doCreateAddress(ctx context.Context, user *mixin.User, assetID, publicKey, label, pin string) string {
-	addr, err := user.CreateWithdrawAddress(ctx, mixin.WithdrawAddress{
+func doCreateAddress(ctx context.Context, user *sdk.User, assetID, publicKey, label, pin string) string {
+	addr, err := user.CreateWithdrawAddress(ctx, sdk.WithdrawAddress{
 		AssetID:     assetID,
 		Destination: publicKey,
 		Label:       label,
@@ -29,7 +29,7 @@ func doCreateAddress(ctx context.Context, user *mixin.User, assetID, publicKey, 
 	return addr.AddressID
 }
 
-func doAssetAddresses(ctx context.Context, user *mixin.User, assetID string) {
+func doAssetAddresses(ctx context.Context, user *sdk.User, assetID string) {
 	addrs, err := user.ReadWithdrawAddresses(ctx, assetID)
 	if err != nil {
 		log.Panicln(err)
@@ -37,7 +37,7 @@ func doAssetAddresses(ctx context.Context, user *mixin.User, assetID string) {
 	printJSON("read withdraw addresses", addrs)
 }
 
-func doDeleteAddress(ctx context.Context, user *mixin.User, addressID, pin string) {
+func doDeleteAddress(ctx context.Context, user *sdk.User, addressID, pin string) {
 	err := user.DeleteWithdrawAddress(ctx, addressID, pin)
 	if err != nil {
 		log.Panicln(err)

@@ -1,7 +1,15 @@
-package mixin_sdk
+package sdk
 
 import (
 	"fmt"
+)
+
+const (
+	// RequestFailed request failed
+	RequestFailed = 1000000
+
+	// InvalidTraceID invalid trace
+	InvalidTraceID
 )
 
 type Error struct {
@@ -11,10 +19,10 @@ type Error struct {
 }
 
 func (e Error) Error() string {
-	return fmt.Sprintf("%s [%d/%d]",e.Description,e.Status,e.Code)
+	return fmt.Sprintf("%s [%d/%d]", e.Description, e.Status, e.Code)
 }
 
-func createError(status,code int,description string) error {
+func createError(status, code int, description string) error {
 	return &Error{
 		Status:      status,
 		Code:        code,

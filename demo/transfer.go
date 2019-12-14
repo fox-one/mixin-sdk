@@ -4,12 +4,12 @@ import (
 	"context"
 	"log"
 
-	"github.com/fox-one/mixin-sdk/mixin"
+	sdk "github.com/fox-one/mixin-sdk"
 	"github.com/gofrs/uuid"
 )
 
-func doTransaction(ctx context.Context, user *mixin.User, assetID, opponentKey, amount, memo, pin string) {
-	snapshot, err := user.Transaction(ctx, &mixin.TransferInput{
+func doTransaction(ctx context.Context, user *sdk.User, assetID, opponentKey, amount, memo, pin string) {
+	snapshot, err := user.Transaction(ctx, &sdk.TransferInput{
 		TraceID:     uuid.Must(uuid.NewV4()).String(),
 		AssetID:     assetID,
 		OpponentKey: opponentKey,
@@ -22,8 +22,8 @@ func doTransaction(ctx context.Context, user *mixin.User, assetID, opponentKey, 
 	printJSON("do transfer", snapshot)
 }
 
-func doTransfer(ctx context.Context, user *mixin.User, assetID, opponentID, amount, memo, pin string) *mixin.Snapshot {
-	snapshot, err := user.Transfer(ctx, &mixin.TransferInput{
+func doTransfer(ctx context.Context, user *sdk.User, assetID, opponentID, amount, memo, pin string) *sdk.Snapshot {
+	snapshot, err := user.Transfer(ctx, &sdk.TransferInput{
 		TraceID:    uuid.Must(uuid.NewV4()).String(),
 		AssetID:    assetID,
 		OpponentID: opponentID,
@@ -37,10 +37,10 @@ func doTransfer(ctx context.Context, user *mixin.User, assetID, opponentID, amou
 	return snapshot
 }
 
-func doWithdraw(ctx context.Context, user *mixin.User, assetID, publicKey, amount, memo, pin string) *mixin.Snapshot {
+func doWithdraw(ctx context.Context, user *sdk.User, assetID, publicKey, amount, memo, pin string) *sdk.Snapshot {
 	addrID := doCreateAddress(ctx, user, assetID, publicKey, "Test Withdraw", pin)
 
-	snapshot, err := user.Withdraw(ctx, &mixin.TransferInput{
+	snapshot, err := user.Withdraw(ctx, &sdk.TransferInput{
 		TraceID:   uuid.Must(uuid.NewV4()).String(),
 		AssetID:   assetID,
 		AddressID: addrID,

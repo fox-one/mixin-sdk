@@ -6,10 +6,10 @@ import (
 	"crypto/rsa"
 	"log"
 
-	"github.com/fox-one/mixin-sdk/mixin"
+	sdk "github.com/fox-one/mixin-sdk"
 )
 
-func doCreateUser(ctx context.Context, user *mixin.User, pin string) *mixin.User {
+func doCreateUser(ctx context.Context, user *sdk.User, pin string) *sdk.User {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 1024)
 	if err != nil {
 		log.Panicln(err)
@@ -28,7 +28,7 @@ func doCreateUser(ctx context.Context, user *mixin.User, pin string) *mixin.User
 	return u
 }
 
-func doModifyPIN(ctx context.Context, user *mixin.User, oldPIN, pin string) {
+func doModifyPIN(ctx context.Context, user *sdk.User, oldPIN, pin string) {
 	err := user.ModifyPIN(ctx, oldPIN, pin)
 	if err != nil {
 		log.Panicln(err)
@@ -36,7 +36,7 @@ func doModifyPIN(ctx context.Context, user *mixin.User, oldPIN, pin string) {
 	log.Println("modify PIN succ")
 }
 
-func doVerifyPIN(ctx context.Context, user *mixin.User, pin string) {
+func doVerifyPIN(ctx context.Context, user *sdk.User, pin string) {
 	err := user.VerifyPIN(ctx, pin)
 	if err != nil {
 		log.Panicln(err)

@@ -1,9 +1,10 @@
-package mixin_sdk
+package sdk
 
 import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -57,4 +58,38 @@ func UnmarshalResponse(resp *resty.Response, v interface{}) error {
 	}
 
 	return json.Unmarshal(data, v)
+}
+
+// User API Request
+
+func (user *User) Request(ctx context.Context, method, uri string, body interface{}, resp interface{}) error {
+	ctx = WithAuth(ctx, user)
+	req := Request(ctx)
+	if body != nil {
+		req = req.SetBody(body)
+	}
+
+	r, err := req.Execute(strings.ToUpper(method), uri)
+	if err != nil {
+		return err
+	}
+
+	if resp != nil {
+		err = UnmarshalResponse(r, resp)
+	} else {
+		_, err = DecodeResponse(r)
+	}
+	return err
+}
+
+func (user *User) RequestWithPIN(ctx context.Context, method, uri string, body map[string]interface{}, pin string, resp interface{}) error {
+	if body == nil {
+		body = map[string]interface{}{}
+	}
+
+	body, err := user.paramWithPIN(body, pin)
+	if err != nil {
+		return err
+	}
+	return user.Request(ctx, method, uri, body, resp)
 }

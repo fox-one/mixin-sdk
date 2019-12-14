@@ -4,10 +4,10 @@ import (
 	"context"
 	"log"
 
-	"github.com/fox-one/mixin-sdk/mixin"
+	sdk "github.com/fox-one/mixin-sdk"
 )
 
-func doAssetFee(ctx context.Context, user *mixin.User) {
+func doAssetFee(ctx context.Context, user *sdk.User) {
 	assetID := "43d61dcd-e413-450d-80b8-101d5e903357"
 	fee, err := user.ReadAssetFee(ctx, assetID)
 	if err != nil {
@@ -24,7 +24,7 @@ func doAssetFee(ctx context.Context, user *mixin.User) {
 	}
 }
 
-func validateAsset(asset *mixin.Asset) {
+func validateAsset(asset *sdk.Asset) {
 	if len(asset.PublicKey)+len(asset.AccountName) == 0 {
 		log.Panicln("empty public key and account name", asset)
 	}
@@ -34,7 +34,7 @@ func validateAsset(asset *mixin.Asset) {
 	}
 }
 
-func doAsset(ctx context.Context, user *mixin.User) string {
+func doAsset(ctx context.Context, user *sdk.User) string {
 	assetID := "965e5c6e-434c-3fa9-b780-c50f43cd955c"
 	asset, err := user.ReadAsset(ctx, assetID)
 	if err != nil {
@@ -50,7 +50,7 @@ func doAsset(ctx context.Context, user *mixin.User) string {
 	return asset.PublicKey
 }
 
-func doAssets(ctx context.Context, user *mixin.User) {
+func doAssets(ctx context.Context, user *sdk.User) {
 	assets, err := user.ReadAssets(ctx)
 	if err != nil {
 		log.Panicln(err)

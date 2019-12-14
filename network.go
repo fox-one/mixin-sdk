@@ -1,11 +1,26 @@
-package mixin
+package sdk
 
 import (
 	"context"
+	"time"
 
-	mixinsdk "github.com/fox-one/mixin-sdk"
 	"github.com/shopspring/decimal"
 )
+
+type Chain struct {
+	ChainID              string          `json:"chain_id"`
+	IconURL              string          `json:"icon_url"`
+	Name                 string          `json:"name"`
+	Type                 string          `json:"type"`
+	WithdrawFee          decimal.Decimal `json:"withdrawal_fee"`
+	WithdrawPendingCount int             `json:"withdrawal_pending_count"`
+	WithdrawTimestamp    time.Time       `json:"withdrawal_timestamp"`
+
+	DepositBlockHeight  int  `json:"deposit_block_height"`
+	ExternalBlockHeight int  `json:"external_block_height"`
+	ManagedBlockHeight  int  `json:"managed_block_height"`
+	IsSynchronized      bool `json:"is_synchronized"`
+}
 
 // NetworkInfo mixin network info
 type NetworkInfo struct {
@@ -23,15 +38,17 @@ type NetworkInfo struct {
 	Type           string          `json:"type"`
 }
 
+// API
+
 // ReadNetworkInfo read mixin network
 func ReadNetworkInfo(ctx context.Context) (*NetworkInfo, error) {
-	resp, err := mixinsdk.Request(ctx).Get("/network")
+	resp, err := Request(ctx).Get("/network")
 	if err != nil {
 		return nil, err
 	}
 
 	var info NetworkInfo
-	if err := mixinsdk.UnmarshalResponse(resp, &info); err != nil {
+	if err := UnmarshalResponse(resp, &info); err != nil {
 		return nil, err
 	}
 	return &info, nil

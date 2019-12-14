@@ -1,4 +1,4 @@
-package mixin
+package sdk
 
 import (
 	"context"
@@ -56,14 +56,13 @@ func (user *User) VerifyPayment(ctx context.Context, input *TransferInput) (bool
 		Amount string `json:"amount"`
 		Status string `json:"status"`
 	}
-	if err := user.SendRequest(ctx, "POST", "/payments", input, &resp); err != nil {
+	if err := user.Request(ctx, "POST", "/payments", input, &resp); err != nil {
 		return false, err
 	}
 
 	if resp.Amount != input.Amount || strings.ToLower(resp.Status) != "paid" {
 		return false, nil
 	}
-
 	return true, nil
 }
 
@@ -78,15 +77,14 @@ func (user *User) Transfer(ctx context.Context, input *TransferInput, pin string
 		*Snapshot
 		Memo string `json:"memo,omitempty"`
 	}
-	if err := user.SendRequestWithPIN(ctx, "POST", "/transfers", utils.UnselectFields(input), pin, &resp); err != nil {
+	if err := user.RequestWithPIN(ctx, "POST", "/transfers", utils.UnselectFields(input), pin, &resp); err != nil {
 		return nil, err
 	}
 
 	resp.Snapshot.Data = resp.Memo
 	if !input.verify(*resp.Snapshot) {
-		return nil, traceError()
+		return nil, createError(202, InvalidTraceID, "payment with trace not matched")
 	}
-
 	return resp.Snapshot, nil
 }
 
@@ -101,14 +99,13 @@ func (user User) Withdraw(ctx context.Context, input *TransferInput, pin string)
 		*Snapshot
 		Memo string `json:"memo,omitempty"`
 	}
-	if err := user.SendRequestWithPIN(ctx, "POST", "/withdrawals", utils.UnselectFields(input), pin, &resp); err != nil {
+	if err := user.RequestWithPIN(ctx, "POST", "/withdrawals", utils.UnselectFields(input), pin, &resp); err != nil {
 		return nil, err
 	}
 
 	resp.Snapshot.Data = resp.Memo
 	if !input.verify(*resp.Snapshot) {
-		return nil, traceError()
+		return nil, createError(202, InvalidTraceID, "payment with trace not matched")
 	}
-
 	return resp.Snapshot, nil
 }

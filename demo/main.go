@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/fox-one/mixin-sdk/mixin"
+	sdk "github.com/fox-one/mixin-sdk"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -17,7 +17,7 @@ func printJSON(prefix string, item interface{}) {
 }
 
 func main() {
-	user := &mixin.User{
+	user := &sdk.User{
 		UserID:    ClientID,
 		SessionID: SessionID,
 		PINToken:  PINToken,

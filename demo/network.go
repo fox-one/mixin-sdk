@@ -4,11 +4,11 @@ import (
 	"context"
 	"log"
 
-	"github.com/fox-one/mixin-sdk/mixin"
+	sdk "github.com/fox-one/mixin-sdk"
 )
 
 func doReadNetworkInfo(ctx context.Context) {
-	network, err := mixin.ReadNetworkInfo(ctx)
+	network, err := sdk.ReadNetworkInfo(ctx)
 	if err != nil {
 		log.Panicln(err)
 	}
