@@ -2,16 +2,18 @@ package mixin
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
+	mixinsdk "github.com/fox-one/mixin-sdk"
 	"github.com/fox-one/mixin-sdk/utils"
 )
 
-// ReadNetwork read network snapshots
-func (user *User) ReadNetwork(ctx context.Context, assetID string, offset time.Time, order bool, limit uint) ([]*Snapshot, error) {
-	uri := fmt.Sprintf("/network/snapshots?limit=%d", limit)
+func readSnapshots(ctx context.Context, network bool, assetID string, offset time.Time, order bool, limit uint) ([]*Snapshot, error) {
+	uri := fmt.Sprintf("/snapshots?limit=%d", limit)
+	if network {
+		uri = fmt.Sprintf("/network/snapshots?limit=%d", limit)
+	}
 	if !offset.IsZero() {
 		uri = uri + "&offset=" + offset.UTC().Format(time.RFC3339Nano)
 	}
@@ -23,89 +25,99 @@ func (user *User) ReadNetwork(ctx context.Context, assetID string, offset time.T
 	} else {
 		uri = uri + "&order=DESC"
 	}
-	data, err := user.Request(ctx, "GET", uri, nil)
+	resp, err := mixinsdk.Request(ctx).Get(uri)
 	if err != nil {
-		return nil, requestError(err)
+		return nil, err
 	}
 
-	var resp struct {
-		Snapshots []*Snapshot `json:"data,omitempty"`
-		Error     *Error      `json:"error,omitempty"`
-	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	} else if resp.Error != nil {
-		return nil, resp.Error
+	var snapshots []*Snapshot
+	if err := mixinsdk.UnmarshalResponse(resp, &snapshots); err != nil {
+		return nil, err
 	}
 
-	for _, snapshot := range resp.Snapshots {
+	for _, snapshot := range snapshots {
 		if snapshot.Asset != nil {
 			snapshot.AssetID = snapshot.Asset.AssetID
 		}
 	}
 
-	return resp.Snapshots, nil
+	return snapshots, nil
 }
 
-// ReadNetworkSnapshot read snapshot with snapshot id
+func (user *User) ReadNetwork(ctx context.Context, assetID string, offset time.Time, order bool, limit uint) ([]*Snapshot, error) {
+	ctx = mixinsdk.WithAuth(ctx, user)
+	return readSnapshots(ctx, true, assetID, offset, order, limit)
+}
+
+func ReadNetwork(ctx context.Context, assetID string, offset time.Time, order bool, limit uint, accessToken string) ([]*Snapshot, error) {
+	ctx = mixinsdk.WithToken(ctx, accessToken)
+	return readSnapshots(ctx, true, assetID, offset, order, limit)
+}
+
+func (user *User) ReadSnapshots(ctx context.Context, assetID string, offset time.Time, limit uint) ([]*Snapshot, error) {
+	ctx = mixinsdk.WithAuth(ctx, user)
+	return readSnapshots(ctx, false, assetID, offset, false, limit)
+}
+
+func ReadSnapshots(ctx context.Context, assetID string, offset time.Time, limit uint, accessToken string) ([]*Snapshot, error) {
+	ctx = mixinsdk.WithToken(ctx, accessToken)
+	return readSnapshots(ctx, false, assetID, offset, false, limit)
+}
+
+func readSnapshot(ctx context.Context, network bool, snapshotID string) (*Snapshot, error) {
+	uri := "/snapshots/" + snapshotID
+	if network {
+		uri = "/network/snapshots/" + snapshotID
+	}
+	resp, err := mixinsdk.Request(ctx).Get(uri)
+	if err != nil {
+		return nil, err
+	}
+
+	var snapshot Snapshot
+	if err := mixinsdk.UnmarshalResponse(resp, &snapshot); err != nil {
+		return nil, err
+	}
+	return &snapshot, nil
+}
+
 func (user *User) ReadNetworkSnapshot(ctx context.Context, snapshotID string) (*Snapshot, error) {
-	data, err := user.Request(ctx, "GET", "/network/snapshots/"+snapshotID, nil)
-	if err != nil {
-		return nil, requestError(err)
-	}
-
-	var resp struct {
-		Snapshot *Snapshot `json:"data,omitempty"`
-		Error    *Error    `json:"error,omitempty"`
-	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	} else if resp.Error != nil {
-		return nil, resp.Error
-	}
-	return resp.Snapshot, nil
+	ctx = mixinsdk.WithAuth(ctx, user)
+	return readSnapshot(ctx, false, snapshotID)
 }
 
-// ReadSnapshot read snapshot with snapshot id
-func (user *User) ReadSnapshot(ctx context.Context, snapshotID string) (*Snapshot, error) {
-	data, err := user.Request(ctx, "GET", "/snapshots/"+snapshotID, nil)
-	if err != nil {
-		return nil, requestError(err)
-	}
+func ReadNetworkSnapshot(ctx context.Context, snapshotID, accessToken string) (*Snapshot, error) {
+	ctx = mixinsdk.WithToken(ctx, accessToken)
+	return readSnapshot(ctx, false, snapshotID)
+}
 
-	var resp struct {
-		Snapshot *Snapshot `json:"data,omitempty"`
-		Error    *Error    `json:"error,omitempty"`
-	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	} else if resp.Error != nil {
-		return nil, resp.Error
-	}
-	return resp.Snapshot, nil
+func (user *User) ReadSnapshot(ctx context.Context, snapshotID string) (*Snapshot, error) {
+	ctx = mixinsdk.WithAuth(ctx, user)
+	return readSnapshot(ctx, true, snapshotID)
+}
+
+func ReadSnapshot(ctx context.Context, snapshotID, accessToken string) (*Snapshot, error) {
+	ctx = mixinsdk.WithToken(ctx, accessToken)
+	return readSnapshot(ctx, true, snapshotID)
 }
 
 // ReadTransfer read snapshot with trace id
 func (user *User) ReadTransfer(ctx context.Context, traceID string) (*Snapshot, error) {
-	data, err := user.Request(ctx, "GET", "/transfers/trace/"+traceID, nil)
+	ctx = mixinsdk.WithAuth(ctx, user)
+	resp, err := mixinsdk.Request(ctx).Get("/transfers/trace/" + traceID)
 	if err != nil {
-		return nil, requestError(err)
+		return nil, err
 	}
 
-	var resp struct {
-		Snapshot *Snapshot `json:"data,omitempty"`
-		Error    *Error    `json:"error,omitempty"`
+	var snapshot Snapshot
+	if err := mixinsdk.UnmarshalResponse(resp, &snapshot); err != nil {
+		return nil, err
 	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	} else if resp.Error != nil {
-		return nil, resp.Error
-	}
-	return resp.Snapshot, nil
+	return &snapshot, nil
 }
 
-// ReadExternal read external snapshots
-func (user *User) ReadExternal(ctx context.Context, assetID, destination, tag string, offset time.Time, limit int) ([]*DepositTransaction, error) {
+// read external snapshots
+func ReadExternal(ctx context.Context, assetID, destination, tag string, offset time.Time, limit int) ([]*DepositTransaction, error) {
 	var paras = make([]string, 0, 12)
 	if len(assetID) > 0 {
 		paras = append(paras, "asset", assetID)
@@ -124,21 +136,17 @@ func (user *User) ReadExternal(ctx context.Context, assetID, destination, tag st
 	}
 	uri, err := utils.BuildURL("/external/transactions", paras...)
 	if err != nil {
-		return nil, requestError(err)
-	}
-	data, err := user.Request(ctx, "GET", uri, nil)
-	if err != nil {
-		return nil, requestError(err)
+		return nil, err
 	}
 
-	var resp struct {
-		Snapshots []*DepositTransaction `json:"data,omitempty"`
-		Error     *Error                `json:"error,omitempty"`
+	resp, err := mixinsdk.Request(ctx).Get(uri)
+	if err != nil {
+		return nil, err
 	}
-	if err = json.Unmarshal(data, &resp); err != nil {
-		return nil, requestError(err)
-	} else if resp.Error != nil {
-		return nil, resp.Error
+
+	var snapshots []*DepositTransaction
+	if err := mixinsdk.UnmarshalResponse(resp, &snapshots); err != nil {
+		return nil, err
 	}
-	return resp.Snapshots, nil
+	return snapshots, nil
 }

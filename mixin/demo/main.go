@@ -12,11 +12,8 @@ import (
 )
 
 func printJSON(prefix string, item interface{}) {
-	msg, err := jsoniter.MarshalToString(item)
-	if err != nil {
-		log.Panicln(err)
-	}
-	log.Println(prefix, msg)
+	msg, _ := jsoniter.MarshalIndent(item, "", "    ")
+	log.Println(prefix, string(msg))
 }
 
 func main() {
@@ -54,13 +51,15 @@ func main() {
 	time.Sleep(time.Second * 5)
 	doWithdraw(ctx, u, assetID, publicKey, "0.1", "pong", p)
 
-	doReadNetwork(ctx, u)
+	doReadNetwork(ctx)
+	doUserReadNetwork(ctx, u)
+	doReadSnapshots(ctx, user)
 
 	doReadSnapshot(ctx, u, snap.SnapshotID)
 
 	doReadTransfer(ctx, u, snap.TraceID)
 
-	doReadExternal(ctx, u)
+	doReadExternal(ctx)
 
 	doReadNetworkInfo(ctx, user)
 

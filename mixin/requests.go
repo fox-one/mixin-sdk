@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	mixin_sdk "github.com/fox-one/mixin-sdk"
+	mixinsdk "github.com/fox-one/mixin-sdk"
 )
 
 // RequestWithPIN sign pin and request
@@ -28,11 +28,11 @@ func (user *User) RequestWithPIN(ctx context.Context, method, uri string, payloa
 
 // Request sign and request
 func (user *User) Request(ctx context.Context, method, uri string, payload []byte) ([]byte, error) {
-	ctx = mixin_sdk.WithAuth(ctx,user)
-	resp,err := mixin_sdk.Request(ctx).SetBody(payload).Execute(method,uri)
+	ctx = mixinsdk.WithAuth(ctx, user)
+	resp, err := mixinsdk.Request(ctx).SetBody(payload).Execute(method, uri)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
-	return resp.Body(),nil
+	return resp.Body(), nil
 }
