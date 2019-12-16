@@ -25,7 +25,7 @@ type MessageRequest struct {
 	QuoteMessageID   string `json:"quote_message_id"`
 }
 
-func (user *User) SendMessages(ctx context.Context, messages []*MessageRequest) error {
+func (user *User) SendMessages(ctx context.Context, messages ...*MessageRequest) error {
 	if len(messages) == 0 {
 		return nil
 	}
