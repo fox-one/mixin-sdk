@@ -13,7 +13,6 @@ import (
 	"github.com/fox-one/pkg/uuid"
 	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -219,12 +218,12 @@ func tick(ctx context.Context, conn *websocket.Conn) {
 }
 
 func (b *BlazeClient) ack(ctx context.Context, _ *websocket.Conn, ackBuffer <-chan string) {
-	var requests []*AcknowledgementRequest
-
 	const dur = time.Second
 	t := time.NewTimer(dur)
 
-	const maxBatch = 8 * ackBatch
+	const maxBatch = 8 * ackBatch // 640
+
+	requests := make([]*AcknowledgementRequest, 0, ackBatch)
 
 	for {
 		select {
@@ -241,7 +240,9 @@ func (b *BlazeClient) ack(ctx context.Context, _ *websocket.Conn, ackBuffer <-ch
 			if count := len(requests); count >= maxBatch {
 				count = maxBatch
 				if err := b.sendAcknowledgements(ctx, requests[:count]); err == nil {
-					requests = requests[count:]
+					remain := requests[count:]
+					copy(requests, remain)
+					requests = requests[:len(remain)]
 
 					if !t.Stop() {
 						<-t.C
@@ -252,17 +253,14 @@ func (b *BlazeClient) ack(ctx context.Context, _ *websocket.Conn, ackBuffer <-ch
 			}
 		case <-t.C:
 			if count := len(requests); count > 0 {
-				logrus.Infof("prepare to ack %d messages", count)
-
-				if max := 8 * ackBatch; count > max {
-					count = max
+				if count > maxBatch {
+					count = maxBatch
 				}
 
-				start := time.Now()
 				if err := b.sendAcknowledgements(ctx, requests[:count]); err == nil {
-					logrus.Infof("ack %d messages in %s", count, time.Since(start))
-					requests = requests[count:]
-					logrus.Infof("remain %d messages", len(requests))
+					remain := requests[count:]
+					copy(requests, remain)
+					requests = requests[:len(remain)]
 				}
 			}
 
