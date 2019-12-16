@@ -117,7 +117,7 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 	go tick(ctx, conn)
 
 	ackBuffer := make(chan string, 1)
-	go ack(ctx, conn, ackBuffer)
+	go b.ack(ctx, conn, ackBuffer)
 
 	if err = writeMessage(conn, "LIST_PENDING_MESSAGES", nil); err != nil {
 		return fmt.Errorf("write LIST_PENDING_MESSAGES failed: %w", err)
@@ -209,7 +209,7 @@ func tick(ctx context.Context, conn *websocket.Conn) error {
 	}
 }
 
-func ack(ctx context.Context, conn *websocket.Conn, ackBuffer <-chan string) error {
+func (b *BlazeClient) ack(ctx context.Context, conn *websocket.Conn, ackBuffer <-chan string) error {
 	defer conn.Close()
 
 	var requests []*AcknowledgementRequest
@@ -229,9 +229,7 @@ func ack(ctx context.Context, conn *websocket.Conn, ackBuffer <-chan string) err
 
 			// ack limit 是 80，这里设置得稍微低一点
 			if len(requests) >= 70 {
-				if err := writeMessage(conn, "ACKNOWLEDGE_MESSAGE_RECEIPTS", map[string]interface{}{
-					"messages": requests,
-				}); err != nil {
+				if err := b.sendAcknowledgements(ctx, requests); err != nil {
 					return err
 				}
 
@@ -249,9 +247,7 @@ func ack(ctx context.Context, conn *websocket.Conn, ackBuffer <-chan string) err
 			}
 		case <-t.C:
 			if len(requests) > 0 {
-				if err := writeMessage(conn, "ACKNOWLEDGE_MESSAGE_RECEIPTS", map[string]interface{}{
-					"messages": requests,
-				}); err != nil {
+				if err := b.sendAcknowledgements(ctx, requests); err != nil {
 					return err
 				}
 
@@ -261,6 +257,17 @@ func ack(ctx context.Context, conn *websocket.Conn, ackBuffer <-chan string) err
 			t.Reset(dur)
 		}
 	}
+}
+
+func (b *BlazeClient) sendAcknowledgements(ctx context.Context, requests []*AcknowledgementRequest) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+
+	if err := b.user.SendAcknowledgements(ctx, requests); err != nil {
+		return fmt.Errorf("send acknowledgements failed: %w", err)
+	}
+
+	return nil
 }
 
 func writeMessage(coon *websocket.Conn, action string, params map[string]interface{}) error {
