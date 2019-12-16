@@ -158,6 +158,8 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 			return err
 		}
 
+		messageID := message.MessageID
+
 		// 重置 message 的 ack 状态为 false
 		// 如果调用方自己 ack，请调用 message 的 Ack() 方法
 		message.reset()
@@ -166,10 +168,13 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 		}
 
 		if !message.ack {
-			ackBuffer <- message.MessageID
+			ackBuffer <- messageID
 		}
 
 		if time.Until(b.readDeadline) < time.Second {
+			// 可能因为收到的消息过多或者消息处理太慢或者 ack 太慢
+			// 导致没有及时处理 pong frame 而 read deadline 没有刷新
+			// 这种情况下不应该读超时
 			_ = b.SetReadDeadline(conn, time.Now().Add(pongWait))
 		}
 	}
