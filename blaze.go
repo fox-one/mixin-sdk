@@ -237,14 +237,17 @@ func (b *BlazeClient) ack(ctx context.Context, _ *websocket.Conn, ackBuffer <-ch
 			})
 		case <-t.C:
 			if count := len(requests); count > 0 {
+				logrus.Infof("prepare to ack %d messages", count)
+
 				if max := 8 * ackBatch; count > max {
 					count = max
 				}
 
 				start := time.Now()
 				if err := b.sendAcknowledgements(ctx, requests[:count]); err == nil {
-					requests = requests[count:]
 					logrus.Infof("ack %d messages in %s", count, time.Since(start))
+					requests = requests[count:]
+					logrus.Infof("remain %d messages", len(requests))
 				}
 			}
 
