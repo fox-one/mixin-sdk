@@ -213,7 +213,8 @@ func ack(ctx context.Context, conn *websocket.Conn, ids <-chan string) error {
 				Status:    "READ",
 			})
 
-			if len(requests) >= 80 {
+			// ack limit 是 80，这里设置得稍微低一点
+			if len(requests) >= 70 {
 				if err := writeMessage(conn, "ACKNOWLEDGE_MESSAGE_RECEIPTS", map[string]interface{}{
 					"messages": requests,
 				}); err != nil {
