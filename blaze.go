@@ -56,6 +56,16 @@ type MessageView struct {
 	Source           string    `json:"source"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
+
+	ack bool
+}
+
+func (m *MessageView) reset() {
+	m.ack = false
+}
+
+func (m *MessageView) Ack() {
+	m.ack = true
 }
 
 type TransferView struct {
@@ -144,11 +154,16 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 			return err
 		}
 
+		// 重置 message 的 ack 状态为 false
+		// 如果调用方自己 ack，请调用 message 的 Ack() 方法
+		message.reset()
 		if err := listener.OnMessage(ctx, &message, b.user.UserID); err != nil {
 			return err
 		}
 
-		messageIds <- message.MessageID
+		if !message.ack {
+			messageIds <- message.MessageID
+		}
 	}
 }
 

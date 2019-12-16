@@ -14,3 +14,7 @@ func (user *User) SendAcknowledgements(ctx context.Context, requests []*Acknowle
 
 	return user.Request(ctx, "POST", "/acknowledgements", requests, nil)
 }
+
+func (user *User) SendAcknowledgement(ctx context.Context, request *AcknowledgementRequest) error {
+	return user.SendAcknowledgements(ctx, []*AcknowledgementRequest{request})
+}
