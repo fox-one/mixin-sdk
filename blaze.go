@@ -1,4 +1,4 @@
-package sdk
+package mixin
 
 import (
 	"compress/gzip"

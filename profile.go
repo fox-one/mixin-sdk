@@ -1,4 +1,4 @@
-package sdk
+package mixin
 
 import (
 	"context"
@@ -33,6 +33,10 @@ func (user *User) FetchProfile(ctx context.Context) (*Profile, error) {
 func FetchProfile(ctx context.Context, accessToken string) (*Profile, error) {
 	ctx = WithToken(ctx, accessToken)
 	return fetchProfile(ctx)
+}
+
+func UserMe(ctx context.Context, accessToken string) (*Profile, error) {
+	return FetchProfile(ctx, accessToken)
 }
 
 // ModifyProfile update my profile

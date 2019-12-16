@@ -1,4 +1,4 @@
-package sdk
+package mixin
 
 import (
 	"context"
@@ -25,11 +25,6 @@ type MessageRequest struct {
 	QuoteMessageID   string `json:"quote_message_id"`
 }
 
-type AcknowledgementRequest struct {
-	MessageID string `json:"message_id,omitempty"`
-	Status    string `json:"status,omitempty"`
-}
-
 func (user *User) SendMessages(ctx context.Context, messages ...MessageRequest) error {
 	if len(messages) == 0 {
 		return nil
@@ -40,11 +35,4 @@ func (user *User) SendMessages(ctx context.Context, messages ...MessageRequest) 
 		paras = messages[0]
 	}
 	return user.Request(ctx, "POST", "/messages", paras, nil)
-}
-
-func (user *User) SendAcknowledgements(ctx context.Context, requests []*AcknowledgementRequest) error {
-	if len(requests) == 0 {
-		return nil
-	}
-	return user.Request(ctx, "POST", "/acknowledgements", requests, nil)
 }
