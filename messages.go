@@ -26,13 +26,16 @@ type MessageRequest struct {
 }
 
 func (user *User) SendMessages(ctx context.Context, messages []*MessageRequest) error {
-	if len(messages) == 0 {
+	switch len(messages) {
+	case 0:
 		return nil
+	case 1:
+		return user.SendMessage(ctx, messages[0])
+	default:
+		return user.Request(ctx, "POST", "/messages", messages, nil)
 	}
-
-	return user.Request(ctx, "POST", "/messages", messages, nil)
 }
 
 func (user *User) SendMessage(ctx context.Context, message *MessageRequest) error {
-	return user.SendMessages(ctx, []*MessageRequest{message})
+	return user.Request(ctx, "POST", "/messages", message, nil)
 }
