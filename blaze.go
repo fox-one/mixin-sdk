@@ -106,6 +106,9 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 
 	go tick(ctx, conn)
 
+	messageIds := make(chan string, 1)
+	go ack(ctx, conn, messageIds)
+
 	if err = writeMessage(conn, "LIST_PENDING_MESSAGES", nil); err != nil {
 		return fmt.Errorf("write LIST_PENDING_MESSAGES failed: %w", err)
 	}
@@ -144,6 +147,8 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 		if err := listener.OnMessage(ctx, &message, b.user.UserID); err != nil {
 			return err
 		}
+
+		messageIds <- message.MessageID
 	}
 }
 
@@ -186,6 +191,55 @@ func tick(ctx context.Context, conn *websocket.Conn) error {
 			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return fmt.Errorf("write PING failed: %w", err)
 			}
+		}
+	}
+}
+
+func ack(ctx context.Context, conn *websocket.Conn, ids <-chan string) error {
+	defer conn.Close()
+
+	var requests []*AcknowledgementRequest
+
+	const dur = time.Second
+	t := time.NewTimer(dur)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case id := <-ids:
+			requests = append(requests, &AcknowledgementRequest{
+				MessageID: id,
+				Status:    "READ",
+			})
+
+			if len(requests) >= 80 {
+				if err := writeMessage(conn, "ACKNOWLEDGE_MESSAGE_RECEIPTS", map[string]interface{}{
+					"messages": requests,
+				}); err != nil {
+					return err
+				}
+
+				requests = []*AcknowledgementRequest{}
+
+				if !t.Stop() {
+					<-t.C
+				}
+
+				t.Reset(dur)
+			}
+		case <-t.C:
+			if len(requests) > 0 {
+				if err := writeMessage(conn, "ACKNOWLEDGE_MESSAGE_RECEIPTS", map[string]interface{}{
+					"messages": requests,
+				}); err != nil {
+					return err
+				}
+
+				requests = []*AcknowledgementRequest{}
+			}
+
+			t.Reset(dur)
 		}
 	}
 }
