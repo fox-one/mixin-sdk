@@ -49,9 +49,6 @@ type CreateConversationInput struct {
 	Category       string         `json:"category,omitempty"`
 	ConversationID string         `json:"conversation_id,omitempty"`
 	Name           string         `json:"name,omitempty"`
-	Action         string         `json:"action,omitempty"`
-	Role           string         `json:"role,omitempty"`
-	UserID         string         `json:"user_id,omitempty"`
 	Participants   []*Participant `json:"participants,omitempty"`
 }
 
@@ -69,7 +66,7 @@ func (user *User) CreateContactConversation(ctx context.Context, userID string) 
 	return user.CreateConversation(ctx, &CreateConversationInput{
 		Category:       ConversationCategoryContact,
 		ConversationID: utils.UniqueConversationID(user.UserID, userID),
-		UserID:         userID,
+		Participants:   []*Participant{{UserID: userID}},
 	})
 }
 
