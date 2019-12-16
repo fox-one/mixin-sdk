@@ -224,6 +224,8 @@ func (b *BlazeClient) ack(ctx context.Context, _ *websocket.Conn, ackBuffer <-ch
 	const dur = time.Second
 	t := time.NewTimer(dur)
 
+	const maxBatch = 8 * ackBatch
+
 	for {
 		select {
 		case id, ok := <-ackBuffer:
@@ -235,6 +237,19 @@ func (b *BlazeClient) ack(ctx context.Context, _ *websocket.Conn, ackBuffer <-ch
 				MessageID: id,
 				Status:    "READ",
 			})
+
+			if count := len(requests); count >= maxBatch {
+				count = maxBatch
+				if err := b.sendAcknowledgements(ctx, requests[:count]); err == nil {
+					requests = requests[count:]
+
+					if !t.Stop() {
+						<-t.C
+					}
+
+					t.Reset(dur)
+				}
+			}
 		case <-t.C:
 			if count := len(requests); count > 0 {
 				logrus.Infof("prepare to ack %d messages", count)
