@@ -13,6 +13,7 @@ import (
 	"github.com/fox-one/pkg/uuid"
 	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -240,8 +241,10 @@ func (b *BlazeClient) ack(ctx context.Context, _ *websocket.Conn, ackBuffer <-ch
 					count = max
 				}
 
+				start := time.Now()
 				if err := b.sendAcknowledgements(ctx, requests[:count]); err == nil {
 					requests = requests[count:]
+					logrus.Infof("ack %d messages in %s", count, time.Since(start))
 				}
 			}
 
