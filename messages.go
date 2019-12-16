@@ -4,6 +4,19 @@ import (
 	"context"
 )
 
+const (
+	MessageCategoryPlainText             = "PLAIN_TEXT"
+	MessageCategoryPlainImage            = "PLAIN_IMAGE"
+	MessageCategoryPlainData             = "PLAIN_DATA"
+	MessageCategoryPlainSticker          = "PLAIN_STICKER"
+	MessageCategoryPlainLive             = "PLAIN_LIVE"
+	MessageCategoryPlainContact          = "PLAIN_CONTACT"
+	MessageCategorySystemConversation    = "SYSTEM_CONVERSATION"
+	MessageCategorySystemAccountSnapshot = "SYSTEM_ACCOUNT_SNAPSHOT"
+	MessageCategoryMessageRecall         = "MESSAGE_RECALL"
+	MessageCategoryAppButtonGroup        = "APP_BUTTON_GROUP"
+)
+
 type LiveMessagePayload struct {
 	Width    int    `json:"width"`
 	Height   int    `json:"height"`

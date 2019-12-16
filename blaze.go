@@ -13,6 +13,7 @@ import (
 	"github.com/fox-one/pkg/uuid"
 	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -20,20 +21,9 @@ const (
 	pongWait   = 10 * time.Second
 	pingPeriod = pongWait * 8 / 10
 
-	createMessageAction = "CREATE_MESSAGE"
-)
+	ackBatch = 80
 
-const (
-	MessageCategoryPlainText             = "PLAIN_TEXT"
-	MessageCategoryPlainImage            = "PLAIN_IMAGE"
-	MessageCategoryPlainData             = "PLAIN_DATA"
-	MessageCategoryPlainSticker          = "PLAIN_STICKER"
-	MessageCategoryPlainLive             = "PLAIN_LIVE"
-	MessageCategoryPlainContact          = "PLAIN_CONTACT"
-	MessageCategorySystemConversation    = "SYSTEM_CONVERSATION"
-	MessageCategorySystemAccountSnapshot = "SYSTEM_ACCOUNT_SNAPSHOT"
-	MessageCategoryMessageRecall         = "MESSAGE_RECALL"
-	MessageCategoryAppButtonGroup        = "APP_BUTTON_GROUP"
+	createMessageAction = "CREATE_MESSAGE"
 )
 
 type BlazeMessage struct {
@@ -87,7 +77,17 @@ type SystemConversationPayload struct {
 }
 
 type BlazeClient struct {
-	user *User
+	user         *User
+	readDeadline time.Time
+}
+
+func (b *BlazeClient) SetReadDeadline(conn *websocket.Conn, t time.Time) error {
+	if err := conn.SetReadDeadline(t); err != nil {
+		return err
+	}
+
+	b.readDeadline = t
+	return nil
 }
 
 type BlazeListener interface {
@@ -111,13 +111,17 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	conn.SetReadDeadline(time.Now().Add(pongWait))
-	conn.SetPongHandler(func(string) error { conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-
 	go tick(ctx, conn)
 
-	ackBuffer := make(chan string, 1)
+	ackBuffer := make(chan string)
+	defer close(ackBuffer)
+
 	go b.ack(ctx, conn, ackBuffer)
+
+	_ = b.SetReadDeadline(conn, time.Now().Add(pongWait))
+	conn.SetPongHandler(func(string) error {
+		return b.SetReadDeadline(conn, time.Now().Add(pongWait))
+	})
 
 	if err = writeMessage(conn, "LIST_PENDING_MESSAGES", nil); err != nil {
 		return fmt.Errorf("write LIST_PENDING_MESSAGES failed: %w", err)
@@ -164,6 +168,10 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 		if !message.ack {
 			ackBuffer <- message.MessageID
 		}
+
+		if time.Until(b.readDeadline) < time.Second {
+			_ = b.SetReadDeadline(conn, time.Now().Add(pongWait))
+		}
 	}
 }
 
@@ -190,28 +198,26 @@ func connectMixinBlaze(user *User) (*websocket.Conn, error) {
 	return conn, nil
 }
 
-func tick(ctx context.Context, conn *websocket.Conn) error {
+func tick(ctx context.Context, conn *websocket.Conn) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
+		conn.Close()
 		ticker.Stop()
-		_ = conn.Close()
 	}()
 
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return
 		case <-ticker.C:
-			if err := conn.WriteControl(websocket.PingMessage, nil, time.Now().Add(pongWait)); err != nil {
-				return fmt.Errorf("write PING failed: %w", err)
+			if err := conn.WriteControl(websocket.PingMessage, nil, time.Now().Add(writeWait)); err != nil {
+				return
 			}
 		}
 	}
 }
 
-func (b *BlazeClient) ack(ctx context.Context, conn *websocket.Conn, ackBuffer <-chan string) error {
-	defer conn.Close()
-
+func (b *BlazeClient) ack(ctx context.Context, _ *websocket.Conn, ackBuffer <-chan string) {
 	var requests []*AcknowledgementRequest
 
 	const dur = time.Second
@@ -219,39 +225,24 @@ func (b *BlazeClient) ack(ctx context.Context, conn *websocket.Conn, ackBuffer <
 
 	for {
 		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case id := <-ackBuffer:
+		case id, ok := <-ackBuffer:
+			if !ok {
+				return
+			}
+
 			requests = append(requests, &AcknowledgementRequest{
 				MessageID: id,
 				Status:    "READ",
 			})
-
-			// ack limit 是 80，这里设置得稍微低一点
-			if len(requests) >= 70 {
-				if err := b.sendAcknowledgements(ctx, requests); err != nil {
-					return err
-				}
-
-				requests = []*AcknowledgementRequest{}
-
-				if !t.Stop() {
-					<-t.C
-				}
-
-				t.Reset(dur)
-
-				// client is busy
-				// reset read deadline to avoid read timeout
-				conn.SetReadDeadline(time.Now().Add(pongWait))
-			}
 		case <-t.C:
-			if len(requests) > 0 {
-				if err := b.sendAcknowledgements(ctx, requests); err != nil {
-					return err
+			if count := len(requests); count > 0 {
+				if max := 8 * ackBatch; count > max {
+					count = max
 				}
 
-				requests = []*AcknowledgementRequest{}
+				if err := b.sendAcknowledgements(ctx, requests[:count]); err == nil {
+					requests = requests[count:]
+				}
 			}
 
 			t.Reset(dur)
@@ -260,14 +251,24 @@ func (b *BlazeClient) ack(ctx context.Context, conn *websocket.Conn, ackBuffer <
 }
 
 func (b *BlazeClient) sendAcknowledgements(ctx context.Context, requests []*AcknowledgementRequest) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Second)
-	defer cancel()
-
-	if err := b.user.SendAcknowledgements(ctx, requests); err != nil {
-		return fmt.Errorf("send acknowledgements failed: %w", err)
+	if len(requests) <= ackBatch {
+		return b.user.SendAcknowledgements(ctx, requests)
 	}
 
-	return nil
+	var g errgroup.Group
+	for idx := 0; idx < len(requests); idx += ackBatch {
+		right := idx + ackBatch
+		if right > len(requests) {
+			right = len(requests)
+		}
+
+		batch := requests[idx:right]
+		g.Go(func() error {
+			return b.user.SendAcknowledgements(ctx, batch)
+		})
+	}
+
+	return g.Wait()
 }
 
 func writeMessage(coon *websocket.Conn, action string, params map[string]interface{}) error {
@@ -285,7 +286,10 @@ func writeMessage(coon *websocket.Conn, action string, params map[string]interfa
 }
 
 func writeGzipToConn(conn *websocket.Conn, msg []byte) error {
-	conn.SetWriteDeadline(time.Now().Add(writeWait))
+	if err := conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+		return err
+	}
+
 	wsWriter, err := conn.NextWriter(websocket.BinaryMessage)
 	if err != nil {
 		return err
