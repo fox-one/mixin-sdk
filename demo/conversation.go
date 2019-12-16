@@ -14,10 +14,10 @@ func doCreateConversation(ctx context.Context, user *sdk.User) *sdk.Conversation
 	participants := []*sdk.Participant{
 		&sdk.Participant{
 			UserID: receiver,
-			Role:   "ADMIN",
+			Role:   sdk.ParticipantRoleAdmin,
 		},
 	}
-	conversation, err := user.CreateConversation(ctx, "GROUP", conversationID, "Haha", "", "", "", participants)
+	conversation, err := user.CreateGroupConversation(ctx, conversationID, "haha", participants)
 	if err != nil {
 		log.Panicln(err)
 	}
