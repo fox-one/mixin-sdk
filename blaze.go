@@ -202,8 +202,7 @@ func tick(ctx context.Context, conn *websocket.Conn) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			_ = conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+			if err := conn.WriteControl(websocket.PingMessage, nil, time.Now().Add(pongWait)); err != nil {
 				return fmt.Errorf("write PING failed: %w", err)
 			}
 		}
