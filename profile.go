@@ -1,4 +1,4 @@
-package sdk
+package mixin
 
 import (
 	"context"
@@ -33,6 +33,10 @@ func (user *User) FetchProfile(ctx context.Context) (*Profile, error) {
 func FetchProfile(ctx context.Context, accessToken string) (*Profile, error) {
 	ctx = WithToken(ctx, accessToken)
 	return fetchProfile(ctx)
+}
+
+func UserMe(ctx context.Context, accessToken string) (*Profile, error) {
+	return FetchProfile(ctx, accessToken)
 }
 
 // ModifyProfile update my profile
@@ -72,7 +76,7 @@ func (user *User) ModifyPreference(ctx context.Context, receiveMessageSource, ac
 // FetchUsers fetch users
 func (user *User) FetchUsers(ctx context.Context, userIDS ...string) ([]*Profile, error) {
 	if len(userIDS) == 0 {
-		return []*Profile{}, nil
+		return nil, nil
 	}
 
 	var profiles []*Profile
@@ -91,7 +95,7 @@ func (user *User) FetchUser(ctx context.Context, userID string) (*Profile, error
 	return &profile, nil
 }
 
-// SearchUser search user; q is String: Mixin Id or Phone Numbe
+// SearchUser search user; q is String: Mixin Id or Phone number
 func (user *User) SearchUser(ctx context.Context, q string) (*Profile, error) {
 	var profile Profile
 	if err := user.Request(ctx, "GET", "/search/"+q, nil, &profile); err != nil {

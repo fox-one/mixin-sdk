@@ -1,4 +1,4 @@
-package sdk
+package mixin
 
 import (
 	"compress/gzip"
@@ -56,6 +56,16 @@ type MessageView struct {
 	Source           string    `json:"source"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
+
+	ack bool
+}
+
+func (m *MessageView) reset() {
+	m.ack = false
+}
+
+func (m *MessageView) Ack() {
+	m.ack = true
 }
 
 type TransferView struct {
@@ -69,7 +79,7 @@ type TransferView struct {
 	CreatedAt     time.Time `json:"created_at"`
 }
 
-type systemConversationPayload struct {
+type SystemConversationPayload struct {
 	Action        string `json:"action"`
 	ParticipantID string `json:"participant_id"`
 	UserID        string `json:"user_id,omitempty"`
@@ -106,6 +116,9 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 
 	go tick(ctx, conn)
 
+	messageIds := make(chan string, 1)
+	go ack(ctx, conn, messageIds)
+
 	if err = writeMessage(conn, "LIST_PENDING_MESSAGES", nil); err != nil {
 		return fmt.Errorf("write LIST_PENDING_MESSAGES failed: %w", err)
 	}
@@ -141,8 +154,15 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 			return err
 		}
 
+		// 重置 message 的 ack 状态为 false
+		// 如果调用方自己 ack，请调用 message 的 Ack() 方法
+		message.reset()
 		if err := listener.OnMessage(ctx, &message, b.user.UserID); err != nil {
 			return err
+		}
+
+		if !message.ack {
+			messageIds <- message.MessageID
 		}
 	}
 }
@@ -186,6 +206,56 @@ func tick(ctx context.Context, conn *websocket.Conn) error {
 			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return fmt.Errorf("write PING failed: %w", err)
 			}
+		}
+	}
+}
+
+func ack(ctx context.Context, conn *websocket.Conn, ids <-chan string) error {
+	defer conn.Close()
+
+	var requests []*AcknowledgementRequest
+
+	const dur = time.Second
+	t := time.NewTimer(dur)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case id := <-ids:
+			requests = append(requests, &AcknowledgementRequest{
+				MessageID: id,
+				Status:    "READ",
+			})
+
+			// ack limit 是 80，这里设置得稍微低一点
+			if len(requests) >= 70 {
+				if err := writeMessage(conn, "ACKNOWLEDGE_MESSAGE_RECEIPTS", map[string]interface{}{
+					"messages": requests,
+				}); err != nil {
+					return err
+				}
+
+				requests = []*AcknowledgementRequest{}
+
+				if !t.Stop() {
+					<-t.C
+				}
+
+				t.Reset(dur)
+			}
+		case <-t.C:
+			if len(requests) > 0 {
+				if err := writeMessage(conn, "ACKNOWLEDGE_MESSAGE_RECEIPTS", map[string]interface{}{
+					"messages": requests,
+				}); err != nil {
+					return err
+				}
+
+				requests = []*AcknowledgementRequest{}
+			}
+
+			t.Reset(dur)
 		}
 	}
 }

@@ -1,4 +1,4 @@
-package sdk
+package mixin
 
 import (
 	"context"
@@ -27,7 +27,11 @@ type Snapshot struct {
 	Receiver        string `json:"receiver,omitempty"`
 	TransactionHash string `json:"transaction_hash,omitempty"`
 
-	Asset *Asset `gorm:"-" json:"asset,omitempty"`
+	Asset *Asset `json:"asset,omitempty"`
+}
+
+func (snapshot *Snapshot) Memo() string {
+	return snapshot.Data
 }
 
 // DepositTransaction deposit transaction
