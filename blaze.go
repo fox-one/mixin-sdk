@@ -47,13 +47,18 @@ type MessageView struct {
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
 
+	// ack status
 	ack bool
 }
 
 func (m *MessageView) reset() {
 	m.ack = false
+	m.RepresentativeID = ""
+	m.QuoteMessageID = ""
 }
 
+// Ack mark messageView as acked
+// otherwise sdk will ack this message
 func (m *MessageView) Ack() {
 	m.ack = true
 }
@@ -81,15 +86,6 @@ type BlazeClient struct {
 	readDeadline time.Time
 }
 
-func (b *BlazeClient) SetReadDeadline(conn *websocket.Conn, t time.Time) error {
-	if err := conn.SetReadDeadline(t); err != nil {
-		return err
-	}
-
-	b.readDeadline = t
-	return nil
-}
-
 type BlazeListener interface {
 	OnMessage(ctx context.Context, msg *MessageView, userId string) error
 }
@@ -99,6 +95,15 @@ func NewBlazeClient(user *User) *BlazeClient {
 		user: user,
 	}
 	return &client
+}
+
+func (b *BlazeClient) SetReadDeadline(conn *websocket.Conn, t time.Time) error {
+	if err := conn.SetReadDeadline(t); err != nil {
+		return err
+	}
+
+	b.readDeadline = t
+	return nil
 }
 
 func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
@@ -154,15 +159,13 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 			continue
 		}
 
+		message.reset()
+
 		if err := jsoniter.Unmarshal(blazeMessage.Data, &message); err != nil {
 			return err
 		}
 
 		messageID := message.MessageID
-
-		// 重置 message 的 ack 状态为 false
-		// 如果调用方自己 ack，请调用 message 的 Ack() 方法
-		message.reset()
 		if err := listener.OnMessage(ctx, &message, b.user.UserID); err != nil {
 			return err
 		}
@@ -174,7 +177,7 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 		if time.Until(b.readDeadline) < time.Second {
 			// 可能因为收到的消息过多或者消息处理太慢或者 ack 太慢
 			// 导致没有及时处理 pong frame 而 read deadline 没有刷新
-			// 这种情况下不应该读超时
+			// 这种情况下不应该读超时，在这里重置一下 read deadline
 			_ = b.SetReadDeadline(conn, time.Now().Add(pongWait))
 		}
 	}
@@ -249,11 +252,13 @@ func (b *BlazeClient) ack(ctx context.Context, _ *websocket.Conn, ackBuffer <-ch
 					copy(requests, remain)
 					requests = requests[:len(remain)]
 
-					if !t.Stop() {
-						<-t.C
-					}
+					if len(requests) == 0 {
+						if !t.Stop() {
+							<-t.C
+						}
 
-					t.Reset(dur)
+						t.Reset(dur)
+					}
 				}
 			}
 		case <-t.C:
