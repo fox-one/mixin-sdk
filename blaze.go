@@ -69,7 +69,7 @@ type TransferView struct {
 	CreatedAt     time.Time `json:"created_at"`
 }
 
-type systemConversationPayload struct {
+type SystemConversationPayload struct {
 	Action        string `json:"action"`
 	ParticipantID string `json:"participant_id"`
 	UserID        string `json:"user_id,omitempty"`
