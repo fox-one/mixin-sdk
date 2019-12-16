@@ -30,7 +30,7 @@ type WithdrawAddress struct {
 // CreateWithdrawAddress create withdraw address
 func (user *User) CreateWithdrawAddress(ctx context.Context, address WithdrawAddress, pin string) (*WithdrawAddress, error) {
 	if len(address.Label) == 0 {
-		address.Label = "Created by FoxONE"
+		address.Label = "Created by Fox.ONE Mixin SDK"
 	}
 
 	var addr WithdrawAddress
@@ -42,11 +42,11 @@ func (user *User) CreateWithdrawAddress(ctx context.Context, address WithdrawAdd
 
 // ReadWithdrawAddresses read withdraw addresses
 func (user *User) ReadWithdrawAddresses(ctx context.Context, assetID string) ([]*WithdrawAddress, error) {
-	var addrs []*WithdrawAddress
-	if err := user.Request(ctx, "GET", fmt.Sprintf("/assets/%s/addresses", assetID), nil, &addrs); err != nil {
+	var addresses []*WithdrawAddress
+	if err := user.Request(ctx, "GET", fmt.Sprintf("/assets/%s/addresses", assetID), nil, &addresses); err != nil {
 		return nil, err
 	}
-	return addrs, nil
+	return addresses, nil
 }
 
 // DeleteWithdrawAddress delete withdraw address
