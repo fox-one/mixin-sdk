@@ -116,8 +116,8 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 
 	go tick(ctx, conn)
 
-	messageIds := make(chan string, 1)
-	go ack(ctx, conn, messageIds)
+	ackBuffer := make(chan string, 1)
+	go ack(ctx, conn, ackBuffer)
 
 	if err = writeMessage(conn, "LIST_PENDING_MESSAGES", nil); err != nil {
 		return fmt.Errorf("write LIST_PENDING_MESSAGES failed: %w", err)
@@ -162,7 +162,7 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 		}
 
 		if !message.ack {
-			messageIds <- message.MessageID
+			ackBuffer <- message.MessageID
 		}
 	}
 }
@@ -209,7 +209,7 @@ func tick(ctx context.Context, conn *websocket.Conn) error {
 	}
 }
 
-func ack(ctx context.Context, conn *websocket.Conn, ids <-chan string) error {
+func ack(ctx context.Context, conn *websocket.Conn, ackBuffer <-chan string) error {
 	defer conn.Close()
 
 	var requests []*AcknowledgementRequest
@@ -221,7 +221,7 @@ func ack(ctx context.Context, conn *websocket.Conn, ids <-chan string) error {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case id := <-ids:
+		case id := <-ackBuffer:
 			requests = append(requests, &AcknowledgementRequest{
 				MessageID: id,
 				Status:    "READ",
@@ -242,6 +242,10 @@ func ack(ctx context.Context, conn *websocket.Conn, ids <-chan string) error {
 				}
 
 				t.Reset(dur)
+
+				// client is busy
+				// reset read deadline to avoid read timeout
+				conn.SetReadDeadline(time.Now().Add(pongWait))
 			}
 		case <-t.C:
 			if len(requests) > 0 {
