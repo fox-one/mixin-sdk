@@ -70,7 +70,7 @@ func main() {
 	// Messenger
 
 	conversation := doCreateConversation(ctx, user)
-	doMessage(ctx, user, sdk.MessageRequest{
+	doMessage(ctx, user, &sdk.MessageRequest{
 		ConversationID: conversation.ConversationID,
 		MessageID:      uuid.Must(uuid.NewV4()).String(),
 		Category:       "PLAIN_TEXT",

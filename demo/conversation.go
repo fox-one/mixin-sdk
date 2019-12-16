@@ -34,8 +34,8 @@ func doReadConversation(ctx context.Context, user *sdk.User, conversationID stri
 	return conversation
 }
 
-func doMessage(ctx context.Context, user *sdk.User, message sdk.MessageRequest) {
-	err := user.SendMessages(ctx, message)
+func doMessage(ctx context.Context, user *sdk.User, message *sdk.MessageRequest) {
+	err := user.SendMessage(ctx, message)
 	if err != nil {
 		log.Panicln(err)
 	}
