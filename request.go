@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -12,6 +13,7 @@ import (
 var httpClient = resty.New().
 	SetHeader("Content-Type", "application/json").
 	SetHostURL("https://mixin-api.zeromesh.net").
+	SetTimeout(10 * time.Second).
 	SetPreRequestHook(func(c *resty.Client, r *http.Request) error {
 		ctx := r.Context()
 		if auth, ok := ctx.Value(authKey).(Authentication); ok {
@@ -87,9 +89,11 @@ func (user *User) RequestWithPIN(ctx context.Context, method, uri string, body m
 		body = map[string]interface{}{}
 	}
 
-	body, err := user.paramWithPIN(body, pin)
+	pinToken, err := user.EncryptPIN(pin)
 	if err != nil {
 		return err
 	}
+
+	body["pin"] = pinToken
 	return user.Request(ctx, method, uri, body, resp)
 }

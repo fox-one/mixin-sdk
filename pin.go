@@ -66,15 +66,6 @@ func (user *User) EncryptPIN(pin string) (string, error) {
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
-func (user *User) paramWithPIN(payload map[string]interface{}, pin string) (map[string]interface{}, error) {
-	pinToken, err := user.EncryptPIN(pin)
-	if err != nil {
-		return nil, err
-	}
-	payload["pin"] = pinToken
-	return payload, nil
-}
-
 // API
 
 // ModifyPIN modify pin

@@ -13,6 +13,7 @@ import (
 	"github.com/fox-one/pkg/uuid"
 	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -20,20 +21,9 @@ const (
 	pongWait   = 10 * time.Second
 	pingPeriod = pongWait * 8 / 10
 
-	createMessageAction = "CREATE_MESSAGE"
-)
+	ackBatch = 80
 
-const (
-	MessageCategoryPlainText             = "PLAIN_TEXT"
-	MessageCategoryPlainImage            = "PLAIN_IMAGE"
-	MessageCategoryPlainData             = "PLAIN_DATA"
-	MessageCategoryPlainSticker          = "PLAIN_STICKER"
-	MessageCategoryPlainLive             = "PLAIN_LIVE"
-	MessageCategoryPlainContact          = "PLAIN_CONTACT"
-	MessageCategorySystemConversation    = "SYSTEM_CONVERSATION"
-	MessageCategorySystemAccountSnapshot = "SYSTEM_ACCOUNT_SNAPSHOT"
-	MessageCategoryMessageRecall         = "MESSAGE_RECALL"
-	MessageCategoryAppButtonGroup        = "APP_BUTTON_GROUP"
+	createMessageAction = "CREATE_MESSAGE"
 )
 
 type BlazeMessage struct {
@@ -57,13 +47,18 @@ type MessageView struct {
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
 
+	// ack status
 	ack bool
 }
 
 func (m *MessageView) reset() {
 	m.ack = false
+	m.RepresentativeID = ""
+	m.QuoteMessageID = ""
 }
 
+// Ack mark messageView as acked
+// otherwise sdk will ack this message
 func (m *MessageView) Ack() {
 	m.ack = true
 }
@@ -87,7 +82,8 @@ type SystemConversationPayload struct {
 }
 
 type BlazeClient struct {
-	user *User
+	user         *User
+	readDeadline time.Time
 }
 
 type BlazeListener interface {
@@ -101,6 +97,15 @@ func NewBlazeClient(user *User) *BlazeClient {
 	return &client
 }
 
+func (b *BlazeClient) SetReadDeadline(conn *websocket.Conn, t time.Time) error {
+	if err := conn.SetReadDeadline(t); err != nil {
+		return err
+	}
+
+	b.readDeadline = t
+	return nil
+}
+
 func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 	conn, err := connectMixinBlaze(b.user)
 	if err != nil {
@@ -111,13 +116,17 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	conn.SetReadDeadline(time.Now().Add(pongWait))
-	conn.SetPongHandler(func(string) error { conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-
 	go tick(ctx, conn)
 
-	messageIds := make(chan string, 1)
-	go ack(ctx, conn, messageIds)
+	ackBuffer := make(chan string)
+	defer close(ackBuffer)
+
+	go b.ack(ctx, conn, ackBuffer)
+
+	_ = b.SetReadDeadline(conn, time.Now().Add(pongWait))
+	conn.SetPongHandler(func(string) error {
+		return b.SetReadDeadline(conn, time.Now().Add(pongWait))
+	})
 
 	if err = writeMessage(conn, "LIST_PENDING_MESSAGES", nil); err != nil {
 		return fmt.Errorf("write LIST_PENDING_MESSAGES failed: %w", err)
@@ -150,19 +159,26 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 			continue
 		}
 
+		message.reset()
+
 		if err := jsoniter.Unmarshal(blazeMessage.Data, &message); err != nil {
 			return err
 		}
 
-		// 重置 message 的 ack 状态为 false
-		// 如果调用方自己 ack，请调用 message 的 Ack() 方法
-		message.reset()
+		messageID := message.MessageID
 		if err := listener.OnMessage(ctx, &message, b.user.UserID); err != nil {
 			return err
 		}
 
 		if !message.ack {
-			messageIds <- message.MessageID
+			ackBuffer <- messageID
+		}
+
+		if time.Until(b.readDeadline) < time.Second {
+			// 可能因为收到的消息过多或者消息处理太慢或者 ack 太慢
+			// 导致没有及时处理 pong frame 而 read deadline 没有刷新
+			// 这种情况下不应该读超时，在这里重置一下 read deadline
+			_ = b.SetReadDeadline(conn, time.Now().Add(pongWait))
 		}
 	}
 }
@@ -190,74 +206,98 @@ func connectMixinBlaze(user *User) (*websocket.Conn, error) {
 	return conn, nil
 }
 
-func tick(ctx context.Context, conn *websocket.Conn) error {
+func tick(ctx context.Context, conn *websocket.Conn) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
+		conn.Close()
 		ticker.Stop()
-		_ = conn.Close()
 	}()
 
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return
 		case <-ticker.C:
-			_ = conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				return fmt.Errorf("write PING failed: %w", err)
+			if err := conn.WriteControl(websocket.PingMessage, nil, time.Now().Add(writeWait)); err != nil {
+				return
 			}
 		}
 	}
 }
 
-func ack(ctx context.Context, conn *websocket.Conn, ids <-chan string) error {
-	defer conn.Close()
-
-	var requests []*AcknowledgementRequest
-
+func (b *BlazeClient) ack(ctx context.Context, _ *websocket.Conn, ackBuffer <-chan string) {
 	const dur = time.Second
 	t := time.NewTimer(dur)
 
+	const maxBatch = 8 * ackBatch // 640
+
+	requests := make([]*AcknowledgementRequest, 0, ackBatch)
+
 	for {
 		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case id := <-ids:
+		case id, ok := <-ackBuffer:
+			if !ok {
+				return
+			}
+
 			requests = append(requests, &AcknowledgementRequest{
 				MessageID: id,
 				Status:    "READ",
 			})
 
-			// ack limit 是 80，这里设置得稍微低一点
-			if len(requests) >= 70 {
-				if err := writeMessage(conn, "ACKNOWLEDGE_MESSAGE_RECEIPTS", map[string]interface{}{
-					"messages": requests,
-				}); err != nil {
-					return err
+			if count := len(requests); count >= maxBatch {
+				count = maxBatch
+				if err := b.sendAcknowledgements(ctx, requests[:count]); err == nil {
+					remain := requests[count:]
+					copy(requests, remain)
+					requests = requests[:len(remain)]
+
+					if len(requests) == 0 {
+						if !t.Stop() {
+							<-t.C
+						}
+
+						t.Reset(dur)
+					}
 				}
-
-				requests = []*AcknowledgementRequest{}
-
-				if !t.Stop() {
-					<-t.C
-				}
-
-				t.Reset(dur)
 			}
 		case <-t.C:
-			if len(requests) > 0 {
-				if err := writeMessage(conn, "ACKNOWLEDGE_MESSAGE_RECEIPTS", map[string]interface{}{
-					"messages": requests,
-				}); err != nil {
-					return err
+			if count := len(requests); count > 0 {
+				if count > maxBatch {
+					count = maxBatch
 				}
 
-				requests = []*AcknowledgementRequest{}
+				if err := b.sendAcknowledgements(ctx, requests[:count]); err == nil {
+					remain := requests[count:]
+					copy(requests, remain)
+					requests = requests[:len(remain)]
+				}
 			}
 
 			t.Reset(dur)
 		}
 	}
+}
+
+func (b *BlazeClient) sendAcknowledgements(ctx context.Context, requests []*AcknowledgementRequest) error {
+	if len(requests) <= ackBatch {
+		return b.user.SendAcknowledgements(ctx, requests)
+	}
+
+	var g errgroup.Group
+	for idx := 0; idx < len(requests); idx += ackBatch {
+		right := idx + ackBatch
+		if right > len(requests) {
+			right = len(requests)
+		}
+
+		batch := requests[idx:right]
+		g.Go(func() error {
+			return b.user.SendAcknowledgements(ctx, batch)
+		})
+	}
+
+	return g.Wait()
 }
 
 func writeMessage(coon *websocket.Conn, action string, params map[string]interface{}) error {
@@ -275,7 +315,10 @@ func writeMessage(coon *websocket.Conn, action string, params map[string]interfa
 }
 
 func writeGzipToConn(conn *websocket.Conn, msg []byte) error {
-	conn.SetWriteDeadline(time.Now().Add(writeWait))
+	if err := conn.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+		return err
+	}
+
 	wsWriter, err := conn.NextWriter(websocket.BinaryMessage)
 	if err != nil {
 		return err
