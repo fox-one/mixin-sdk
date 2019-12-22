@@ -12,4 +12,5 @@ require (
 	github.com/shopspring/decimal v0.0.0-20191125035519-b054a8dfd10d
 	github.com/stretchr/testify v1.4.0
 	github.com/yiplee/structs v1.0.3
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 )

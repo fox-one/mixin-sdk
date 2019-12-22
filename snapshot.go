@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/fox-one/mixin-sdk/utils"
+	"github.com/shopspring/decimal"
 )
 
 // Snapshot transfer records
@@ -19,9 +20,11 @@ type Snapshot struct {
 	OpponentID string    `json:"opponent_id,omitempty"`
 	CreatedAt  time.Time `json:"created_at"`
 
-	Source string `json:"source"` // Source DEPOSIT_CONFIRMED, TRANSFER_INITIALIZED, WITHDRAWAL_INITIALIZED, WITHDRAWAL_FEE_CHARGED, WITHDRAWAL_FAILED
-	Amount string `json:"amount"`
-	Data   string `json:"data,omitempty"`
+	Source         string          `json:"source"` // Source DEPOSIT_CONFIRMED, TRANSFER_INITIALIZED, WITHDRAWAL_INITIALIZED, WITHDRAWAL_FEE_CHARGED, WITHDRAWAL_FAILED
+	Amount         string          `json:"amount"`
+	OpeningBalance decimal.Decimal `json:"opening_balance"`
+	ClosingBalance decimal.Decimal `json:"closing_balance"`
+	Data           string          `json:"data,omitempty"`
 
 	Sender          string `json:"sender,omitempty"`
 	Receiver        string `json:"receiver,omitempty"`
