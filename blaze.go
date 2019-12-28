@@ -87,7 +87,8 @@ type BlazeClient struct {
 }
 
 type BlazeListener interface {
-	OnMessage(ctx context.Context, msg *MessageView, userId string) error
+	OnBlazeMessage(ctx context.Context, msg *BlazeMessage, userID string) error
+	OnMessage(ctx context.Context, msg *MessageView, userID string) error
 }
 
 func NewBlazeClient(user *User) *BlazeClient {
@@ -152,6 +153,10 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 		}
 
 		if blazeMessage.Error != nil {
+			return err
+		}
+
+		if err := listener.OnBlazeMessage(ctx, &blazeMessage, b.user.UserID); err != nil {
 			return err
 		}
 
