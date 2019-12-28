@@ -23,7 +23,8 @@ const (
 
 	ackBatch = 80
 
-	createMessageAction = "CREATE_MESSAGE"
+	CreateMessageAction      = "CREATE_MESSAGE"
+	AcknowledgeReceiptAction = "ACKNOWLEDGE_MESSAGE_RECEIPT"
 )
 
 type BlazeMessage struct {
@@ -87,7 +88,7 @@ type BlazeClient struct {
 }
 
 type BlazeListener interface {
-	OnBlazeMessage(ctx context.Context, msg *BlazeMessage, userID string) error
+	OnAckReceipt(ctx context.Context, msg *MessageView, userID string) error
 	OnMessage(ctx context.Context, msg *MessageView, userID string) error
 }
 
@@ -156,34 +157,32 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 			return err
 		}
 
-		if err := listener.OnBlazeMessage(ctx, &blazeMessage, b.user.UserID); err != nil {
-			return err
-		}
-
-		if blazeMessage.Action != createMessageAction {
+		message.reset()
+		if err := jsoniter.Unmarshal(blazeMessage.Data, &message); err != nil {
 			continue
 		}
 
-		message.reset()
+		switch blazeMessage.Action {
+		case CreateMessageAction:
+			messageID := message.MessageID
+			if err := listener.OnMessage(ctx, &message, b.user.UserID); err != nil {
+				return err
+			}
 
-		if err := jsoniter.Unmarshal(blazeMessage.Data, &message); err != nil {
-			return err
-		}
+			if !message.ack {
+				ackBuffer <- messageID
+			}
 
-		messageID := message.MessageID
-		if err := listener.OnMessage(ctx, &message, b.user.UserID); err != nil {
-			return err
-		}
-
-		if !message.ack {
-			ackBuffer <- messageID
-		}
-
-		if time.Until(b.readDeadline) < time.Second {
-			// 可能因为收到的消息过多或者消息处理太慢或者 ack 太慢
-			// 导致没有及时处理 pong frame 而 read deadline 没有刷新
-			// 这种情况下不应该读超时，在这里重置一下 read deadline
-			_ = b.SetReadDeadline(conn, time.Now().Add(pongWait))
+			if time.Until(b.readDeadline) < time.Second {
+				// 可能因为收到的消息过多或者消息处理太慢或者 ack 太慢
+				// 导致没有及时处理 pong frame 而 read deadline 没有刷新
+				// 这种情况下不应该读超时，在这里重置一下 read deadline
+				_ = b.SetReadDeadline(conn, time.Now().Add(pongWait))
+			}
+		case AcknowledgeReceiptAction:
+			if err := listener.OnAckReceipt(ctx, &message, b.user.UserID); err != nil {
+				return err
+			}
 		}
 	}
 }

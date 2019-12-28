@@ -29,6 +29,10 @@ func (h Handler) OnMessage(ctx context.Context, msgView *sdk.MessageView, userID
 	return nil
 }
 
+func (h Handler) OnAckReceipt(ctx context.Context, msg *sdk.MessageView, userID string) error {
+	return nil
+}
+
 func (h Handler) Run(ctx context.Context, user *sdk.User) {
 	for {
 		select {
