@@ -135,22 +135,22 @@ func readSnapshot(ctx context.Context, network bool, snapshotID string) (*Snapsh
 
 func (user *User) ReadNetworkSnapshot(ctx context.Context, snapshotID string) (*Snapshot, error) {
 	ctx = WithAuth(ctx, user)
-	return readSnapshot(ctx, false, snapshotID)
+	return readSnapshot(ctx, true, snapshotID)
 }
 
 func ReadNetworkSnapshot(ctx context.Context, snapshotID, accessToken string) (*Snapshot, error) {
 	ctx = WithToken(ctx, accessToken)
-	return readSnapshot(ctx, false, snapshotID)
+	return readSnapshot(ctx, true, snapshotID)
 }
 
 func (user *User) ReadSnapshot(ctx context.Context, snapshotID string) (*Snapshot, error) {
 	ctx = WithAuth(ctx, user)
-	return readSnapshot(ctx, true, snapshotID)
+	return readSnapshot(ctx, false, snapshotID)
 }
 
 func ReadSnapshot(ctx context.Context, snapshotID, accessToken string) (*Snapshot, error) {
 	ctx = WithToken(ctx, accessToken)
-	return readSnapshot(ctx, true, snapshotID)
+	return readSnapshot(ctx, false, snapshotID)
 }
 
 // ReadTransfer read snapshot with trace id
