@@ -9,7 +9,7 @@ import (
 )
 
 func doReadNetwork(ctx context.Context) {
-	snapshots, err := sdk.ReadNetwork(ctx, "965e5c6e-434c-3fa9-b780-c50f43cd955c", time.Time{}, false, 10, "")
+	snapshots, err := sdk.ReadNetwork(ctx, "965e5c6e-434c-3fa9-b780-c50f43cd955c", time.Time{}, "", 10, "")
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -17,7 +17,7 @@ func doReadNetwork(ctx context.Context) {
 }
 
 func doUserReadNetwork(ctx context.Context, user *sdk.User) {
-	snapshots, err := user.ReadNetwork(ctx, "965e5c6e-434c-3fa9-b780-c50f43cd955c", time.Time{}, false, 10)
+	snapshots, err := user.ReadNetwork(ctx, "965e5c6e-434c-3fa9-b780-c50f43cd955c", time.Time{}, "", 10)
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -25,7 +25,7 @@ func doUserReadNetwork(ctx context.Context, user *sdk.User) {
 }
 
 func doReadSnapshots(ctx context.Context, user *sdk.User) {
-	snapshots, err := user.ReadSnapshots(ctx, "965e5c6e-434c-3fa9-b780-c50f43cd955c", time.Time{}, 10)
+	snapshots, err := user.ReadSnapshots(ctx, "965e5c6e-434c-3fa9-b780-c50f43cd955c", time.Time{}, "", 10)
 	if err != nil {
 		log.Panicln(err)
 	}
