@@ -2,6 +2,7 @@ package mixin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -61,7 +62,12 @@ type DepositTransaction struct {
 	AccountTag  string `json:"account_tag"`
 }
 
-func readSnapshots(ctx context.Context, network bool, assetID string, offset time.Time, order bool, limit uint) ([]*Snapshot, error) {
+const (
+	OrderDESC = "DESC"
+	OrderASC  = "ASC"
+)
+
+func readSnapshots(ctx context.Context, network bool, assetID string, offset time.Time, order string, limit uint) ([]*Snapshot, error) {
 	uri := fmt.Sprintf("/snapshots?limit=%d", limit)
 	if network {
 		uri = fmt.Sprintf("/network/snapshots?limit=%d", limit)
@@ -72,11 +78,17 @@ func readSnapshots(ctx context.Context, network bool, assetID string, offset tim
 	if len(assetID) > 0 {
 		uri = uri + "&asset=" + assetID
 	}
-	if order {
-		uri = uri + "&order=ASC"
-	} else {
-		uri = uri + "&order=DESC"
+
+	switch order {
+	case OrderASC:
+	case OrderDESC, "":
+		order = OrderDESC
+	default:
+		return nil, errors.New("order must be ASC or DESC")
 	}
+
+	uri = uri + "&order=" + order
+
 	resp, err := Request(ctx).Get(uri)
 	if err != nil {
 		return nil, err
@@ -96,24 +108,24 @@ func readSnapshots(ctx context.Context, network bool, assetID string, offset tim
 	return snapshots, nil
 }
 
-func (user *User) ReadNetwork(ctx context.Context, assetID string, offset time.Time, order bool, limit uint) ([]*Snapshot, error) {
+func (user *User) ReadNetwork(ctx context.Context, assetID string, offset time.Time, order string, limit uint) ([]*Snapshot, error) {
 	ctx = WithAuth(ctx, user)
 	return readSnapshots(ctx, true, assetID, offset, order, limit)
 }
 
-func ReadNetwork(ctx context.Context, assetID string, offset time.Time, order bool, limit uint, accessToken string) ([]*Snapshot, error) {
+func ReadNetwork(ctx context.Context, assetID string, offset time.Time, order string, limit uint, accessToken string) ([]*Snapshot, error) {
 	ctx = WithToken(ctx, accessToken)
 	return readSnapshots(ctx, true, assetID, offset, order, limit)
 }
 
-func (user *User) ReadSnapshots(ctx context.Context, assetID string, offset time.Time, limit uint) ([]*Snapshot, error) {
+func (user *User) ReadSnapshots(ctx context.Context, assetID string, offset time.Time, order string, limit uint) ([]*Snapshot, error) {
 	ctx = WithAuth(ctx, user)
-	return readSnapshots(ctx, false, assetID, offset, false, limit)
+	return readSnapshots(ctx, false, assetID, offset, order, limit)
 }
 
-func ReadSnapshots(ctx context.Context, assetID string, offset time.Time, limit uint, accessToken string) ([]*Snapshot, error) {
+func ReadSnapshots(ctx context.Context, assetID string, offset time.Time, order string, limit uint, accessToken string) ([]*Snapshot, error) {
 	ctx = WithToken(ctx, accessToken)
-	return readSnapshots(ctx, false, assetID, offset, false, limit)
+	return readSnapshots(ctx, false, assetID, offset, order, limit)
 }
 
 func readSnapshot(ctx context.Context, network bool, snapshotID string) (*Snapshot, error) {
