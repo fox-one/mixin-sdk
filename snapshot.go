@@ -87,6 +87,8 @@ func readSnapshots(ctx context.Context, network bool, assetID string, offset tim
 		return nil, errors.New("order must be ASC or DESC")
 	}
 
+	uri = uri + "&order=" + order
+
 	resp, err := Request(ctx).Get(uri)
 	if err != nil {
 		return nil, err
