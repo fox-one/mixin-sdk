@@ -12,6 +12,7 @@ type WithdrawAddress struct {
 	AddressID string `json:"address_id,omitempty"`
 	AssetID   string `json:"asset_id"`
 
+	Label       string `json:"label,omitempty"`
 	Destination string `json:"destination,omitempty"`
 	Tag         string `json:"tag,omitempty"`
 
@@ -20,7 +21,6 @@ type WithdrawAddress struct {
 
 	// TODO Deprecated
 	PublicKey   string `json:"public_key,omitempty"`
-	Label       string `json:"label,omitempty"`
 	AccountName string `json:"account_name,omitempty"`
 	AccountTag  string `json:"account_tag,omitempty"`
 }
@@ -37,6 +37,7 @@ func (user *User) CreateWithdrawAddress(ctx context.Context, address WithdrawAdd
 	if err := user.RequestWithPIN(ctx, "POST", "/addresses", utils.UnselectFields(address, "fee", "dust"), pin, &addr); err != nil {
 		return nil, err
 	}
+	addr.AccountTag = addr.Tag
 	return &addr, nil
 }
 
@@ -45,6 +46,9 @@ func (user *User) ReadWithdrawAddresses(ctx context.Context, assetID string) ([]
 	var addresses []*WithdrawAddress
 	if err := user.Request(ctx, "GET", fmt.Sprintf("/assets/%s/addresses", assetID), nil, &addresses); err != nil {
 		return nil, err
+	}
+	for _, addr := range addresses {
+		addr.AccountTag = addr.Tag
 	}
 	return addresses, nil
 }
