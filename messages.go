@@ -28,6 +28,16 @@ type RecallMessagePayload struct {
 	MessageID string `json:"message_id"`
 }
 
+type (
+	AppButtonMessagePayload struct {
+		Label  string `json:"label,omitempty"`
+		Action string `json:"action,omitempty"`
+		Color  string `json:"color,omitempty"`
+	}
+
+	AppButtonGroupMessagePayload []AppButtonMessagePayload
+)
+
 type MessageRequest struct {
 	ConversationID   string `json:"conversation_id"`
 	RecipientID      string `json:"recipient_id"`
