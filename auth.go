@@ -70,6 +70,7 @@ func (user *User) SignToken(method, uri string, body []byte, expire ...time.Dura
 		"exp": expireAt.Unix(),
 		"jti": uuid.Must(uuid.NewV4()).String(),
 		"sig": hex.EncodeToString(sum[:]),
+		"scp": "FULL",
 	}
 	if user.scopes != "" {
 		jwtMap["scp"] = user.scopes
