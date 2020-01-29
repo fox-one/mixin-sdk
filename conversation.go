@@ -2,6 +2,7 @@ package mixin
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/fox-one/mixin-sdk/utils"
@@ -88,4 +89,44 @@ func (user *User) ReadConversation(ctx context.Context, conversationID string) (
 	}
 
 	return &conversation, nil
+}
+
+func (user *User) ManageConversation(ctx context.Context, conversationID, action string, participants []*Participant) (*Conversation, error) {
+	var conversation Conversation
+	path := fmt.Sprintf("/conversations/%s/participants/%s", conversationID, action)
+	if err := user.Request(ctx, "POST", path, participants, &conversation); err != nil {
+		return nil, err
+	}
+
+	return &conversation, nil
+}
+
+func (user *User) AddParticipants(ctx context.Context, conversationID string, users ...string) (*Conversation, error) {
+	var participants []*Participant
+	for _, user := range users {
+		participants = append(participants, &Participant{UserID: user})
+	}
+
+	return user.ManageConversation(ctx, conversationID, ParticipantActionAdd, participants)
+}
+
+func (user *User) RemoveParticipants(ctx context.Context, conversationID string, users ...string) (*Conversation, error) {
+	var participants []*Participant
+	for _, user := range users {
+		participants = append(participants, &Participant{UserID: user})
+	}
+
+	return user.ManageConversation(ctx, conversationID, ParticipantActionRemove, participants)
+}
+
+func (user *User) AdminParticipants(ctx context.Context, conversationID string, users ...string) (*Conversation, error) {
+	var participants []*Participant
+	for _, user := range users {
+		participants = append(participants, &Participant{
+			UserID: user,
+			Role:   ParticipantRoleAdmin,
+		})
+	}
+
+	return user.ManageConversation(ctx, conversationID, ParticipantActionRole, participants)
 }
