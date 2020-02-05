@@ -130,3 +130,13 @@ func (user *User) AdminParticipants(ctx context.Context, conversationID string, 
 
 	return user.ManageConversation(ctx, conversationID, ParticipantActionRole, participants)
 }
+
+func (user *User) RotateConversation(ctx context.Context, conversationID string) (*Conversation, error) {
+	var conversation Conversation
+	path := fmt.Sprintf("/conversations/%s/rotate", conversationID)
+	if err := user.Request(ctx, "POST", path, nil, &conversation); err != nil {
+		return nil, err
+	}
+
+	return &conversation, nil
+}
