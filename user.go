@@ -19,7 +19,7 @@ type User struct {
 
 	FullName string `json:"full_name"`
 
-	pinCipher  *cipher.Block
+	pinCipher  cipher.Block
 	privateKey *rsa.PrivateKey
 	scopes     string
 }

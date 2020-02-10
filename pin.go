@@ -34,7 +34,7 @@ func (user *User) loadPINCipher() error {
 		return err
 	}
 
-	user.pinCipher = &block
+	user.pinCipher = block
 	return nil
 }
 
@@ -61,7 +61,7 @@ func (user *User) EncryptPIN(pin string) (string, error) {
 	ciphertext := make([]byte, aes.BlockSize+len(pinByte))
 	iv := ciphertext[:aes.BlockSize]
 	io.ReadFull(rand.Reader, iv)
-	mode := cipher.NewCBCEncrypter(*user.pinCipher, iv)
+	mode := cipher.NewCBCEncrypter(user.pinCipher, iv)
 	mode.CryptBlocks(ciphertext[aes.BlockSize:], pinByte)
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
