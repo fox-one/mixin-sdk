@@ -2,6 +2,7 @@ package mixin
 
 import (
 	"context"
+	"errors"
 	"strconv"
 )
 
@@ -22,23 +23,19 @@ func (user *User) CreateAttachment(ctx context.Context) (*Attachment, error) {
 }
 
 // Upload upload files
-func (user *User) Upload(ctx context.Context, file []byte) (string, string, error) {
-	attachment, err := user.CreateAttachment(ctx)
-	if err != nil {
-		return "", "", err
-	}
-
+func UploadAttachment(ctx context.Context, attachment *Attachment, file []byte) error {
 	resp, err := Request(ctx).SetBody(file).
 		SetHeader("Content-Type", "application/octet-stream").
 		SetHeader("x-amz-acl", "public-read").
 		SetHeader("Content-Length", strconv.Itoa(len(file))).
 		Put(attachment.UploadURL)
 	if err != nil {
-		return "", "", err
+		return err
 	}
 
-	if _, err := DecodeResponse(resp); err != nil {
-		return "", "", err
+	if resp.IsError() {
+		return errors.New(resp.Status())
 	}
-	return attachment.AttachmentID, attachment.ViewURL, nil
+
+	return nil
 }
