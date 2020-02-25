@@ -2,11 +2,12 @@ package mixin
 
 import (
 	"context"
+	"strconv"
 )
 
 // Attachment attachment
 type Attachment struct {
-	AttachmentID string `json:"attachment"`
+	AttachmentID string `json:"attachment_id"`
 	UploadURL    string `json:"upload_url"`
 	ViewURL      string `json:"view_url"`
 }
@@ -28,8 +29,9 @@ func (user *User) Upload(ctx context.Context, file []byte) (string, string, erro
 	}
 
 	resp, err := Request(ctx).SetBody(file).
-		SetHeader("Content-Type", "multipart/form-data").
+		SetHeader("Content-Type", "application/octet-stream").
 		SetHeader("x-amz-acl", "public-read").
+		SetHeader("Content-Length", strconv.Itoa(len(file))).
 		Put(attachment.UploadURL)
 	if err != nil {
 		return "", "", err
