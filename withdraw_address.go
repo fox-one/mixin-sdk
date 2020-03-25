@@ -68,5 +68,5 @@ func ReadWithdrawAddresses(ctx context.Context, assetID, accessToken string) ([]
 	var addresses []*WithdrawAddress
 	err = UnmarshalResponse(resp, &addresses)
 
-	return addresses, nil
+	return addresses, err
 }
