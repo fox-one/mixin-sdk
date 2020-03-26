@@ -26,6 +26,7 @@ type Snapshot struct {
 	OpeningBalance decimal.Decimal `json:"opening_balance"`
 	ClosingBalance decimal.Decimal `json:"closing_balance"`
 	Data           string          `json:"data,omitempty"`
+	Type           string          `json:"type,omitempty"`
 
 	Sender          string `json:"sender,omitempty"`
 	Receiver        string `json:"receiver,omitempty"`
