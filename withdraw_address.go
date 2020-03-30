@@ -80,8 +80,8 @@ func ReadWithdrawAddress(ctx context.Context, addressID, accessToken string) (*W
 		return nil, err
 	}
 
-	var address *WithdrawAddress
+	var address WithdrawAddress
 	err = UnmarshalResponse(resp, &address)
 
-	return address, err
+	return &address, err
 }
