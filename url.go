@@ -15,6 +15,7 @@ func PayURL(assetID, traceID, opponentID, amount, memo string) string {
 	q.Set("trace", traceID)
 	q.Set("amount", amount)
 	q.Set("recipient", opponentID)
+	q.Set("memo", memo)
 	u.RawQuery = q.Encode()
 
 	return u.String()
