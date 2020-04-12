@@ -2,6 +2,7 @@ package mixin
 
 import (
 	"context"
+	"encoding/json"
 )
 
 const (
@@ -61,4 +62,8 @@ func (user *User) SendMessages(ctx context.Context, messages []*MessageRequest) 
 
 func (user *User) SendMessage(ctx context.Context, message *MessageRequest) error {
 	return user.Request(ctx, "POST", "/messages", message, nil)
+}
+
+func (user *User) SendRawMessages(ctx context.Context, messages []json.RawMessage) error {
+	return user.Request(ctx, "POST", "/messages", messages, nil)
 }
