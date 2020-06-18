@@ -20,8 +20,11 @@ func fetchProfile(ctx context.Context) (*Profile, error) {
 	}
 
 	var profile Profile
-	err = UnmarshalResponse(resp, &profile)
-	return &profile, err
+	if err := UnmarshalResponse(resp, &profile); err != nil {
+		return nil, err
+	}
+
+	return &profile, nil
 }
 
 // FetchProfile fetch my profile
