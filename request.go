@@ -3,12 +3,16 @@ package mixin
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/fox-one/pkg/uuid"
 	"github.com/go-resty/resty/v2"
 )
+
+const requestIDHeaderKey = "X-Request-ID"
 
 var httpClient = resty.New().
 	SetHeader("Content-Type", "application/json").
@@ -25,11 +29,28 @@ var httpClient = resty.New().
 			r.Header.Set("Authorization", "Bearer "+token)
 		}
 
+		if _, ok := r.Header[requestIDHeaderKey]; !ok {
+			r.Header.Set(requestIDHeaderKey, uuid.New())
+		}
+
 		return nil
+	}).
+	OnAfterResponse(func(c *resty.Client, r *resty.Response) error {
+		return checkResponseRequestID(r)
 	})
 
 func Request(ctx context.Context) *resty.Request {
 	return httpClient.R().SetContext(ctx)
+}
+
+func checkResponseRequestID(r *resty.Response) error {
+	expect := r.Request.Header.Get(requestIDHeaderKey)
+	got := r.Header().Get(requestIDHeaderKey)
+	if expect != "" && got != "" && expect != got {
+		return fmt.Errorf("%s mismatch, expect %q but got %q", requestIDHeaderKey, expect, got)
+	}
+
+	return nil
 }
 
 func DecodeResponse(resp *resty.Response) ([]byte, error) {
