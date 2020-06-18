@@ -13,4 +13,5 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/yiplee/structs v1.0.3
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
+	gopkg.in/h2non/gock.v1 v1.0.15
 )

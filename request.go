@@ -29,7 +29,7 @@ var httpClient = resty.New().
 			r.Header.Set("Authorization", "Bearer "+token)
 		}
 
-		if _, ok := r.Header[requestIDHeaderKey]; !ok {
+		if values := r.Header.Values(requestIDHeaderKey); len(values) == 0 {
 			r.Header.Set(requestIDHeaderKey, uuid.New())
 		}
 
