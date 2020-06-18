@@ -1,7 +1,6 @@
 package mixin
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"io/ioutil"
@@ -15,18 +14,6 @@ import (
 
 type Authentication interface {
 	Auth(r *http.Request) (string, error)
-}
-
-const (
-	authKey = iota
-)
-
-func WithAuth(ctx context.Context, auth Authentication) context.Context {
-	return context.WithValue(ctx, authKey, auth)
-}
-
-func WithToken(ctx context.Context, token string) context.Context {
-	return WithAuth(ctx, accessToken(token))
 }
 
 // Token Auth
