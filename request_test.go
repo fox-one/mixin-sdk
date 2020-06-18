@@ -25,15 +25,16 @@ func TestRequestID(t *testing.T) {
 		SetHeader(requestIDHeaderKey, requestID).
 		BodyString("ok")
 
+	ctx := context.Background()
 	t.Run("request id mismatch", func(t *testing.T) {
-		_, err := Request(context.Background()).Get("/mismatch")
+		_, err := Request(ctx).Get("/mismatch")
 		if assert.NotNilf(t, err, "request should failed by request id mismatch") {
 			assert.Contains(t, err.Error(), requestID)
 		}
 	})
 
 	t.Run("request id match", func(t *testing.T) {
-		r, err := Request(context.Background()).SetHeader(requestIDHeaderKey, requestID).Get("/match")
+		r, err := Request(ctx).SetHeader(requestIDHeaderKey, requestID).Get("/match")
 		assert.Nilf(t, err, "request should be ok")
 		assert.Equalf(t, 200, r.StatusCode(), "status code should be 200")
 		assert.Equalf(t, "ok", string(r.Body()), "body should be %q", "ok")
