@@ -12,7 +12,7 @@ import (
 
 var httpClient = resty.New().
 	SetHeader("Content-Type", "application/json").
-	SetHostURL("https://mixin-api.zeromesh.net").
+	SetHostURL("https://api.mixin.one").
 	SetTimeout(10 * time.Second).
 	SetPreRequestHook(func(c *resty.Client, r *http.Request) error {
 		ctx := r.Context()
