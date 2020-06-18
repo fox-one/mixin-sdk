@@ -2,7 +2,6 @@ package mixin
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,9 +21,9 @@ func TestRequestID(t *testing.T) {
 
 	gock.New(httpClient.HostURL).
 		Persist().
-		Reply(202).
+		Reply(200).
 		SetHeader(requestIDHeaderKey, requestID).
-		JSON(json.RawMessage(`{"data":{"foo":"bar"}}`))
+		BodyString("ok")
 
 	t.Run("request id mismatch", func(t *testing.T) {
 		_, err := Request(context.Background()).Get("/mismatch")
@@ -34,7 +33,9 @@ func TestRequestID(t *testing.T) {
 	})
 
 	t.Run("request id match", func(t *testing.T) {
-		_, err := Request(context.Background()).SetHeader(requestIDHeaderKey, requestID).Get("/match")
+		r, err := Request(context.Background()).SetHeader(requestIDHeaderKey, requestID).Get("/match")
 		assert.Nilf(t, err, "request should be ok")
+		assert.Equalf(t, 200, r.StatusCode(), "status code should be 200")
+		assert.Equalf(t, "ok", string(r.Body()), "body should be %q", "ok")
 	})
 }
