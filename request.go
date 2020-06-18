@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fox-one/pkg/uuid"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -30,7 +29,7 @@ var httpClient = resty.New().
 		}
 
 		if values := r.Header.Values(requestIDHeaderKey); len(values) == 0 {
-			r.Header.Set(requestIDHeaderKey, uuid.New())
+			r.Header.Set(requestIDHeaderKey, RequestIdFromContext(ctx))
 		}
 
 		return nil
