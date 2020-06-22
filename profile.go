@@ -33,6 +33,11 @@ func (user *User) FetchProfile(ctx context.Context) (*Profile, error) {
 	return fetchProfile(ctx)
 }
 
+func (ed *EdOToken) FetchProfile(ctx context.Context) (*Profile, error) {
+	ctx = WithAuth(ctx, ed)
+	return fetchProfile(ctx)
+}
+
 func FetchProfile(ctx context.Context, accessToken string) (*Profile, error) {
 	ctx = WithToken(ctx, accessToken)
 	return fetchProfile(ctx)
