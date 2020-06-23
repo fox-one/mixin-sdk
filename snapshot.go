@@ -114,6 +114,11 @@ func (user *User) ReadNetwork(ctx context.Context, assetID string, offset time.T
 	return readSnapshots(ctx, true, assetID, offset, order, limit)
 }
 
+func (ed *EdOToken) ReadNetwork(ctx context.Context, assetID string, offset time.Time, order string, limit uint) ([]*Snapshot, error) {
+	ctx = WithAuth(ctx, ed)
+	return readSnapshots(ctx, true, assetID, offset, order, limit)
+}
+
 func ReadNetwork(ctx context.Context, assetID string, offset time.Time, order string, limit uint, accessToken string) ([]*Snapshot, error) {
 	ctx = WithToken(ctx, accessToken)
 	return readSnapshots(ctx, true, assetID, offset, order, limit)
@@ -121,6 +126,11 @@ func ReadNetwork(ctx context.Context, assetID string, offset time.Time, order st
 
 func (user *User) ReadSnapshots(ctx context.Context, assetID string, offset time.Time, order string, limit uint) ([]*Snapshot, error) {
 	ctx = WithAuth(ctx, user)
+	return readSnapshots(ctx, false, assetID, offset, order, limit)
+}
+
+func (ed *EdOToken) ReadSnapshots(ctx context.Context, assetID string, offset time.Time, order string, limit uint) ([]*Snapshot, error) {
+	ctx = WithAuth(ctx, ed)
 	return readSnapshots(ctx, false, assetID, offset, order, limit)
 }
 
@@ -151,6 +161,11 @@ func (user *User) ReadNetworkSnapshot(ctx context.Context, snapshotID string) (*
 	return readSnapshot(ctx, true, snapshotID)
 }
 
+func (ed *EdOToken) ReadNetworkSnapshot(ctx context.Context, snapshotID string) (*Snapshot, error) {
+	ctx = WithAuth(ctx, ed)
+	return readSnapshot(ctx, true, snapshotID)
+}
+
 func ReadNetworkSnapshot(ctx context.Context, snapshotID, accessToken string) (*Snapshot, error) {
 	ctx = WithToken(ctx, accessToken)
 	return readSnapshot(ctx, true, snapshotID)
@@ -158,6 +173,11 @@ func ReadNetworkSnapshot(ctx context.Context, snapshotID, accessToken string) (*
 
 func (user *User) ReadSnapshot(ctx context.Context, snapshotID string) (*Snapshot, error) {
 	ctx = WithAuth(ctx, user)
+	return readSnapshot(ctx, false, snapshotID)
+}
+
+func (ed *EdOToken) ReadSnapshot(ctx context.Context, snapshotID string) (*Snapshot, error) {
+	ctx = WithAuth(ctx, ed)
 	return readSnapshot(ctx, false, snapshotID)
 }
 

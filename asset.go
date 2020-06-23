@@ -57,6 +57,11 @@ func (user *User) ReadAsset(ctx context.Context, assetID string) (*Asset, error)
 	return readAsset(ctx, assetID)
 }
 
+func (ed *EdOToken) ReadAsset(ctx context.Context, assetID string) (*Asset, error) {
+	ctx = WithAuth(ctx, ed)
+	return readAsset(ctx, assetID)
+}
+
 // ReadAsset by access token
 func ReadAsset(ctx context.Context, assetID string, accessToken string) (*Asset, error) {
 	ctx = WithToken(ctx, accessToken)
@@ -77,6 +82,11 @@ func readAssets(ctx context.Context) ([]*Asset, error) {
 // ReadAssets get user assets info, including balance, address info, etc.
 func (user *User) ReadAssets(ctx context.Context) ([]*Asset, error) {
 	ctx = WithAuth(ctx, user)
+	return readAssets(ctx)
+}
+
+func (ed *EdOToken) ReadAssets(ctx context.Context) ([]*Asset, error) {
+	ctx = WithAuth(ctx, ed)
 	return readAssets(ctx)
 }
 

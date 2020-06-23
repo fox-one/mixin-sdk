@@ -11,7 +11,10 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-const requestIDHeaderKey = "X-Request-ID"
+const (
+	requestIDHeaderKey      = "X-Request-ID"
+	integrityTokenHeaderKey = "x-integrity-token"
+)
 
 var httpClient = resty.New().
 	SetHeader("Content-Type", "application/json").
@@ -19,6 +22,10 @@ var httpClient = resty.New().
 	SetTimeout(10 * time.Second).
 	SetPreRequestHook(func(c *resty.Client, r *http.Request) error {
 		ctx := r.Context()
+		if values := r.Header.Values(requestIDHeaderKey); len(values) == 0 {
+			r.Header.Set(requestIDHeaderKey, RequestIdFromContext(ctx))
+		}
+
 		if auth, ok := ctx.Value(authKey).(Authentication); ok {
 			token, err := auth.Auth(r)
 			if err != nil {
@@ -28,14 +35,18 @@ var httpClient = resty.New().
 			r.Header.Set("Authorization", "Bearer "+token)
 		}
 
-		if values := r.Header.Values(requestIDHeaderKey); len(values) == 0 {
-			r.Header.Set(requestIDHeaderKey, RequestIdFromContext(ctx))
-		}
-
 		return nil
 	}).
 	OnAfterResponse(func(c *resty.Client, r *resty.Response) error {
-		return checkResponseRequestID(r)
+		if err := checkResponseRequestID(r); err != nil {
+			return err
+		}
+		if auth, ok := r.Request.Context().Value(authKey).(Authentication); ok {
+			if err := auth.VerifyResponse(r); err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 
 func Request(ctx context.Context) *resty.Request {

@@ -25,8 +25,8 @@ func doAssetFee(ctx context.Context, user *sdk.User) {
 }
 
 func validateAsset(asset *sdk.Asset) {
-	if len(asset.PublicKey)+len(asset.AccountName) == 0 {
-		log.Panicln("empty public key and account name", asset)
+	if len(asset.Destination) == 0 {
+		log.Panicln("empty destination", asset)
 	}
 
 	if asset.Balance.IsNegative() {
@@ -47,7 +47,7 @@ func doAsset(ctx context.Context, user *sdk.User) string {
 	}
 
 	validateAsset(asset)
-	return asset.PublicKey
+	return asset.Destination
 }
 
 func doAssets(ctx context.Context, user *sdk.User) {

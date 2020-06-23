@@ -41,47 +41,43 @@ func (user *User) CreateWithdrawAddress(ctx context.Context, address WithdrawAdd
 	return &addr, nil
 }
 
-// ReadWithdrawAddresses read withdraw addresses
-func (user *User) ReadWithdrawAddresses(ctx context.Context, assetID string) ([]*WithdrawAddress, error) {
-	var addresses []*WithdrawAddress
-	if err := user.Request(ctx, "GET", fmt.Sprintf("/assets/%s/addresses", assetID), nil, &addresses); err != nil {
-		return nil, err
-	}
-	for _, addr := range addresses {
-		addr.AccountTag = addr.Tag
-	}
-	return addresses, nil
-}
-
-// DeleteWithdrawAddress delete withdraw address
-func (user *User) DeleteWithdrawAddress(ctx context.Context, addressID, pin string) error {
-	return user.RequestWithPIN(ctx, "POST", fmt.Sprintf("/addresses/%s/delete", addressID), nil, pin, nil)
-}
-
-// ReadWithdrawAddresses read addresses with asset id
-func ReadWithdrawAddresses(ctx context.Context, assetID, accessToken string) ([]*WithdrawAddress, error) {
-	ctx = WithToken(ctx, accessToken)
+func readWithdrawAddresses(ctx context.Context, assetID string) ([]*WithdrawAddress, error) {
 	resp, err := Request(ctx).Get(fmt.Sprintf("/assets/%s/addresses", assetID))
 	if err != nil {
 		return nil, err
 	}
 
 	var addresses []*WithdrawAddress
-	err = UnmarshalResponse(resp, &addresses)
+	if err = UnmarshalResponse(resp, &addresses); err != nil {
+		return nil, err
+	}
+
+	// TODO just fix old version tag, remove in later version
+	for _, addr := range addresses {
+		addr.AccountTag = addr.Tag
+	}
 
 	return addresses, err
 }
 
-// ReadWithdrawAddress read address with address id
-func ReadWithdrawAddress(ctx context.Context, addressID, accessToken string) (*WithdrawAddress, error) {
+// ReadWithdrawAddresses read withdraw addresses
+func (user *User) ReadWithdrawAddresses(ctx context.Context, assetID string) ([]*WithdrawAddress, error) {
+	ctx = WithAuth(ctx, user)
+	return readWithdrawAddresses(ctx, assetID)
+}
+
+func (ed *EdOToken) ReadWithdrawAddresses(ctx context.Context, assetID string) ([]*WithdrawAddress, error) {
+	ctx = WithAuth(ctx, ed)
+	return readWithdrawAddresses(ctx, assetID)
+}
+
+// ReadWithdrawAddresses read addresses with asset id
+func ReadWithdrawAddresses(ctx context.Context, assetID, accessToken string) ([]*WithdrawAddress, error) {
 	ctx = WithToken(ctx, accessToken)
-	resp, err := Request(ctx).Get(fmt.Sprintf("/addresses/%s", addressID))
-	if err != nil {
-		return nil, err
-	}
+	return readWithdrawAddresses(ctx, assetID)
+}
 
-	var address WithdrawAddress
-	err = UnmarshalResponse(resp, &address)
-
-	return &address, err
+// DeleteWithdrawAddress delete withdraw address
+func (user *User) DeleteWithdrawAddress(ctx context.Context, addressID, pin string) error {
+	return user.RequestWithPIN(ctx, "POST", fmt.Sprintf("/addresses/%s/delete", addressID), nil, pin, nil)
 }

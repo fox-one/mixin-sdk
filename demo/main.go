@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"crypto/x509"
 	"encoding/base64"
-	"encoding/pem"
 	"log"
 	"time"
 
@@ -19,18 +17,10 @@ func printJSON(prefix string, item interface{}) {
 }
 
 func main() {
-	user := &sdk.User{
-		UserID:    ClientID,
-		SessionID: SessionID,
-		PINToken:  PINToken,
-	}
-
-	block, _ := pem.Decode([]byte(SessionKey))
-	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	user, err := sdk.NewUser(ClientID, SessionID, SessionKey, PINToken)
 	if err != nil {
 		log.Panicln(err)
 	}
-	user.SetPrivateKey(privateKey)
 
 	ctx := context.Background()
 	publicKey := doAsset(ctx, user)
