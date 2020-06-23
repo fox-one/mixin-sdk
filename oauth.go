@@ -3,6 +3,7 @@ package mixin
 import (
 	"context"
 	"crypto/ed25519"
+	"crypto/rand"
 
 	"github.com/gofrs/uuid"
 )
@@ -62,7 +63,9 @@ func AuthorizeToken(ctx context.Context, clientId, clientSecret string, authoriz
 	return body.AccessToken, body.Scope, err
 }
 
-func AuthorizeTokenV1(ctx context.Context, clientID, secret string, code string, verifier string, seed []byte) (*EdOToken, error) {
+func AuthorizeTokenEd25519(ctx context.Context, clientID, secret string, code string, verifier string) (*EdOToken, error) {
+	var seed = make([]byte, ed25519.SeedSize)
+	rand.Read(seed)
 	priv := ed25519.NewKeyFromSeed(seed)
 	params := map[string]interface{}{
 		"client_id":     clientID,
