@@ -22,6 +22,16 @@ func (user *User) CreateAttachment(ctx context.Context) (*Attachment, error) {
 	return &attachment, nil
 }
 
+// ShowAttachment show attachment by id
+func (user *User) ShowAttachment(ctx context.Context, id string) (*Attachment, error) {
+	var attachment Attachment
+	if err := user.Request(ctx, "GET", "/attachments/"+id, nil, &attachment); err != nil {
+		return nil, err
+	}
+
+	return &attachment, nil
+}
+
 // Upload upload files
 func UploadAttachment(ctx context.Context, attachment *Attachment, file []byte) error {
 	resp, err := Request(ctx).SetBody(file).
