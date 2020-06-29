@@ -24,7 +24,7 @@ type (
 		Recipient *Profile `json:"recipient,omitempty"`
 		Asset     *Asset   `json:"asset,omitempty"`
 		Amount    string   `json:"amount,omitempty"`
-		Statue    string   `json:"statue,omitempty"`
+		Status    string   `json:"status,omitempty"`
 	}
 )
 

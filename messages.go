@@ -7,6 +7,7 @@ import (
 
 const (
 	MessageCategoryPlainText             = "PLAIN_TEXT"
+	MessageCategoryPlainPost             = "PLAIN_POST"
 	MessageCategoryPlainImage            = "PLAIN_IMAGE"
 	MessageCategoryPlainData             = "PLAIN_DATA"
 	MessageCategoryPlainSticker          = "PLAIN_STICKER"
