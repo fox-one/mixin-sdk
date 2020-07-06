@@ -10,7 +10,9 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/binary"
+	"fmt"
 	"io"
+	"regexp"
 	"time"
 )
 
@@ -41,6 +43,10 @@ func (user *User) loadPINCipher() error {
 func (user *User) EncryptPIN(pin string) (string, error) {
 	if len(pin) == 0 {
 		return "", nil
+	}
+
+	if err := ValidatePinPattern(pin); err != nil {
+		return "", err
 	}
 
 	if user.pinCipher == nil {
@@ -84,4 +90,19 @@ func (user *User) ModifyPIN(ctx context.Context, oldPIN, pin string) error {
 // VerifyPIN verify user pin
 func (user *User) VerifyPIN(ctx context.Context, pin string) error {
 	return user.RequestWithPIN(ctx, "POST", "/pin/verify", nil, pin, nil)
+}
+
+// pin validate
+
+var (
+	pinRegex = regexp.MustCompile(`^\d{6}$`)
+)
+
+// ValidatePinPattern validate the pin with pinRegex
+func ValidatePinPattern(pin string) error {
+	if !pinRegex.MatchString(pin) {
+		return fmt.Errorf("pin must match regex pattern %q", pinRegex.String())
+	}
+
+	return nil
 }
