@@ -46,15 +46,15 @@ func (user *User) Auth(r *http.Request) (string, error) {
 			body, _ = ioutil.ReadAll(rc)
 		}
 	}
-	return user.SignToken(requestSig(r.Method, uri, body), r.Header.Get(requestIDHeaderKey))
+	return user.SignToken(requestSig(r.Method, uri, body), r.Header.Get(requestIDHeaderKey), time.Minute)
 }
 
-func (user *User) SignToken(sig, reqID string) (string, error) {
+func (user *User) SignToken(sig, reqID string, exp time.Duration) (string, error) {
 	jwtMap := jwt.MapClaims{
 		"uid": user.UserID,
 		"sid": user.SessionID,
 		"iat": time.Now().Unix(),
-		"exp": time.Now().Add(time.Minute).Unix(),
+		"exp": time.Now().Add(exp).Unix(),
 		"jti": reqID,
 		"sig": sig,
 		"scp": "FULL",
