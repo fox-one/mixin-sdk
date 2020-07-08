@@ -83,7 +83,7 @@ func AuthorizeTokenEd25519(ctx context.Context, clientID, secret string, code st
 
 	var body struct {
 		AuthID    uuid.UUID `json:"authorization_id"`
-		PublicKey []byte    `json:"ed25519"`
+		PublicKey string    `json:"ed25519"`
 		Scope     string    `json:"scope"`
 	}
 
@@ -92,7 +92,8 @@ func AuthorizeTokenEd25519(ctx context.Context, clientID, secret string, code st
 	}
 
 	cid, _ := uuid.FromString(clientID)
-	ed := NewEdOToken(cid, body.AuthID, nil, body.PublicKey, body.Scope)
+	pub, _ := base64.RawURLEncoding.DecodeString(body.PublicKey)
+	ed := NewEdOToken(cid, body.AuthID, nil, pub, body.Scope)
 	ed.EdPrivateKey = priv
 	return ed, err
 }
