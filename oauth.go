@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"encoding/base64"
 
 	"github.com/gofrs/uuid"
 )
@@ -72,7 +73,7 @@ func AuthorizeTokenEd25519(ctx context.Context, clientID, secret string, code st
 		"client_secret": secret,
 		"code":          code,
 		"code_verifier": verifier,
-		"ed25519":       priv[ed25519.SeedSize:],
+		"ed25519":       base64.RawURLEncoding.EncodeToString(priv[ed25519.SeedSize:]),
 	}
 
 	resp, err := Request(ctx).SetBody(params).Post("/oauth/token")
