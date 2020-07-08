@@ -82,16 +82,16 @@ func (ed *EdOToken) Auth(r *http.Request) (string, error) {
 			body, _ = ioutil.ReadAll(rc)
 		}
 	}
-	return ed.SignToken(RequestSig(r.Method, uri, body), r.Header.Get(requestIDHeaderKey))
+	return ed.SignToken(RequestSig(r.Method, uri, body), r.Header.Get(requestIDHeaderKey), time.Minute)
 }
 
-func (ed *EdOToken) SignToken(sig, reqID string) (string, error) {
+func (ed *EdOToken) SignToken(sig, reqID string, exp time.Duration) (string, error) {
 	jwtMap := jwt.MapClaims{
 		"iss": ed.ClientID,
 		"aid": ed.AuthID,
 		"scp": ed.Scope,
 		"iat": time.Now().Unix(),
-		"exp": time.Now().Add(time.Minute).Unix(),
+		"exp": time.Now().Add(exp).Unix(),
 		"sig": sig,
 		"jti": reqID,
 	}
