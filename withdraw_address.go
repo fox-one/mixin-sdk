@@ -93,7 +93,7 @@ func ReadWithdrawAddress(ctx context.Context, addressID, accessToken string) (*W
 	return readWithdrawAddress(ctx, addressID)
 }
 
-func (ed *EdOToken) ReadWithdrawAddress(ctx context.Context, addressID, accessToken string) (*WithdrawAddress, error) {
+func (ed *EdOToken) ReadWithdrawAddress(ctx context.Context, addressID string) (*WithdrawAddress, error) {
 	ctx = WithAuth(ctx, ed)
 	return readWithdrawAddress(ctx, addressID)
 }
