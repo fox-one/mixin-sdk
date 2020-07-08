@@ -77,8 +77,7 @@ func ReadWithdrawAddresses(ctx context.Context, assetID, accessToken string) ([]
 	return readWithdrawAddresses(ctx, assetID)
 }
 
-func ReadWithdrawAddress(ctx context.Context, addressID, accessToken string) (*WithdrawAddress, error) {
-	ctx = WithToken(ctx, accessToken)
+func readWithdrawAddress(ctx context.Context, addressID string) (*WithdrawAddress, error) {
 	resp, err := Request(ctx).Get(fmt.Sprintf("/addresses/%s", addressID))
 	if err != nil {
 		return nil, err
@@ -87,6 +86,16 @@ func ReadWithdrawAddress(ctx context.Context, addressID, accessToken string) (*W
 	var address WithdrawAddress
 	err = UnmarshalResponse(resp, &address)
 	return &address, err
+}
+
+func ReadWithdrawAddress(ctx context.Context, addressID, accessToken string) (*WithdrawAddress, error) {
+	ctx = WithToken(ctx, accessToken)
+	return readWithdrawAddress(ctx, addressID)
+}
+
+func (ed *EdOToken) ReadWithdrawAddress(ctx context.Context, addressID, accessToken string) (*WithdrawAddress, error) {
+	ctx = WithAuth(ctx, ed)
+	return readWithdrawAddress(ctx, addressID)
 }
 
 // DeleteWithdrawAddress delete withdraw address
