@@ -93,7 +93,7 @@ func AuthorizeTokenEd25519(ctx context.Context, clientID, secret string, code st
 
 	cid, _ := uuid.FromString(clientID)
 	pub, _ := base64.RawURLEncoding.DecodeString(body.PublicKey)
-	ed := NewEdOToken(cid, body.AuthID, nil, pub, body.Scope)
+	ed := NewEdOToken(cid, body.AuthID, seed, pub, body.Scope)
 	ed.EdPrivateKey = priv
 	return ed, err
 }
