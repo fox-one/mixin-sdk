@@ -188,7 +188,7 @@ func (b *BlazeClient) Loop(ctx context.Context, listener BlazeListener) error {
 }
 
 func connectMixinBlaze(user *User) (*websocket.Conn, error) {
-	token, err := user.SignToken(requestSig("GET", "/", nil), uuid.New(), time.Minute)
+	token, err := user.SignToken(RequestSig("GET", "/", nil), uuid.New(), time.Minute)
 	if err != nil {
 		return nil, err
 	}

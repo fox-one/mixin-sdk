@@ -18,7 +18,7 @@ type Authentication interface {
 	VerifyResponse(r *resty.Response) error
 }
 
-func requestSig(method, uri string, body []byte) string {
+func RequestSig(method, uri string, body []byte) string {
 	sum := sha256.Sum256(append([]byte(method+uri), body...))
 	return hex.EncodeToString(sum[:])
 }
@@ -46,7 +46,7 @@ func (user *User) Auth(r *http.Request) (string, error) {
 			body, _ = ioutil.ReadAll(rc)
 		}
 	}
-	return user.SignToken(requestSig(r.Method, uri, body), r.Header.Get(requestIDHeaderKey), time.Minute)
+	return user.SignToken(RequestSig(r.Method, uri, body), r.Header.Get(requestIDHeaderKey), time.Minute)
 }
 
 func (user *User) SignToken(sig, reqID string, exp time.Duration) (string, error) {
@@ -82,7 +82,7 @@ func (ed *EdOToken) Auth(r *http.Request) (string, error) {
 			body, _ = ioutil.ReadAll(rc)
 		}
 	}
-	return ed.SignToken(requestSig(r.Method, uri, body), r.Header.Get(requestIDHeaderKey))
+	return ed.SignToken(RequestSig(r.Method, uri, body), r.Header.Get(requestIDHeaderKey))
 }
 
 func (ed *EdOToken) SignToken(sig, reqID string) (string, error) {
