@@ -1,8 +1,12 @@
 package mixin
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
+	"io/ioutil"
+	"net/http"
 	"strconv"
 )
 
@@ -33,18 +37,30 @@ func (user *User) ShowAttachment(ctx context.Context, id string) (*Attachment, e
 }
 
 // Upload upload files
+var uploadClient = &http.Client{}
+
 func UploadAttachment(ctx context.Context, attachment *Attachment, file []byte) error {
-	resp, err := Request(ctx).SetBody(file).
-		SetHeader("Content-Type", "application/octet-stream").
-		SetHeader("x-amz-acl", "public-read").
-		SetHeader("Content-Length", strconv.Itoa(len(file))).
-		Put(attachment.UploadURL)
+	req, err := http.NewRequest("PUT", attachment.UploadURL, bytes.NewReader(file))
 	if err != nil {
 		return err
 	}
 
-	if resp.IsError() {
-		return errors.New(resp.Status())
+	req.Header.Add("Content-Type", "application/octet-stream")
+	req.Header.Add("x-amz-acl", "public-read")
+	req.Header.Add("Content-Length", strconv.Itoa(len(file)))
+
+	resp, err := uploadClient.Do(req)
+	if resp != nil {
+		_, _ = io.Copy(ioutil.Discard, resp.Body)
+		_ = resp.Body.Close()
+	}
+
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode >= 300 {
+		return errors.New(resp.Status)
 	}
 
 	return nil
