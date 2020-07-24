@@ -14,7 +14,8 @@ import (
 
 const (
 	requestIDHeaderKey      = "X-Request-ID"
-	integrityTokenHeaderKey = "x-integrity-token"
+	integrityTokenHeaderKey = "X-Integrity-Token"
+	forceAuthentication     = "X-Force-Authentication"
 )
 
 var httpClient = resty.New().
@@ -35,6 +36,7 @@ var httpClient = resty.New().
 			}
 
 			r.Header.Set("Authorization", "Bearer "+token)
+			r.Header.Set(forceAuthentication, "true")
 		}
 
 		return nil
