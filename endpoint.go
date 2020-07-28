@@ -1,10 +1,7 @@
 package mixin
 
 import (
-	"net/url"
 	"os"
-
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -22,15 +19,9 @@ func init() {
 }
 
 func SetHostURL(url string) {
-	httpClient = httpClient.SetHostURL(url)
+	httpClient.SetHostURL(url)
 }
 
-func SetBlazeHostURL(u string) {
-	url, err := url.Parse(u)
-	if err != nil {
-		log.WithError(err).Errorln("parse blaze host url failed")
-		return
-	}
-
-	blazeHostURL = url.String()
+func SetBlazeHostURL(url string) {
+	blazeHostURL = url
 }
