@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/fox-one/pkg/uuid"
@@ -195,12 +194,11 @@ func connectMixinBlaze(user *User) (*websocket.Conn, error) {
 
 	header := make(http.Header)
 	header.Add("Authorization", "Bearer "+token)
-	u := url.URL{Scheme: "wss", Host: "mixin-blaze.zeromesh.net", Path: "/"}
 	dialer := &websocket.Dialer{
 		Subprotocols:   []string{"Mixin-Blaze-1"},
 		ReadBufferSize: 1024,
 	}
-	conn, _, err := dialer.Dial(u.String(), header)
+	conn, _, err := dialer.Dial(blazeHostURL, header)
 	if err != nil {
 		return nil, err
 	}
