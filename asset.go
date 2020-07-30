@@ -20,6 +20,8 @@ type Asset struct {
 
 	PriceUsd  decimal.Decimal `json:"price_usd,omitempty"`
 	ChangeUsd decimal.Decimal `json:"change_usd,omitempty"`
+	PriceBTC  decimal.Decimal `json:"price_btc,omitempty"`
+	ChangeBTC decimal.Decimal `json:"change_btc,omitempty"`
 	Balance   decimal.Decimal `json:"balance,omitempty"`
 
 	Destination string `json:"destination,omitempty"`
