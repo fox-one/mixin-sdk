@@ -100,7 +100,12 @@ func (ed *EdOToken) SignToken(sig, reqID string, exp time.Duration) (string, err
 }
 
 func (ed *EdOToken) VerifyResponse(r *resty.Response) error {
-	token, err := jwt.Parse(r.Header().Get(integrityTokenHeaderKey), func(t *jwt.Token) (interface{}, error) {
+	sign := r.Header().Get(integrityTokenHeaderKey)
+	if sign == "" && IsErrorCodes(UnmarshalResponse(r, nil), 401) {
+		return nil
+	}
+
+	token, err := jwt.Parse(sign, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*EdDSASigningMethod); !ok {
 			return nil, jwt.ErrInvalidKeyType
 		}
