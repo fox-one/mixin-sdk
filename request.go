@@ -3,6 +3,7 @@ package mixin
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -17,6 +18,8 @@ const (
 	integrityTokenHeaderKey = "X-Integrity-Token"
 	forceAuthentication     = "X-Force-Authentication"
 )
+
+var ErrResponseVerifyFailed = errors.New("response verify failed")
 
 var httpClient = resty.New().
 	SetHeader("Content-Type", "application/json").
@@ -47,7 +50,7 @@ var httpClient = resty.New().
 		}
 		if auth, ok := r.Request.Context().Value(authKey).(Authentication); ok {
 			if err := auth.VerifyResponse(r); err != nil {
-				return err
+				return ErrResponseVerifyFailed
 			}
 		}
 		return nil
