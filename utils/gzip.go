@@ -10,12 +10,13 @@ import (
 func GZipDecode(binary []byte) ([]byte, error) {
 	byteReader := bytes.NewReader(binary)
 	gReader, err := gzip.NewReader(byteReader)
-
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
 
-	return ioutil.ReadAll(gReader)
+	data, err := ioutil.ReadAll(gReader)
+	_ = gReader.Close()
+	return data, err
 }
 
 // GZipEncode gzip encode
