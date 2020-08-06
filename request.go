@@ -54,6 +54,10 @@ var httpClient = resty.New().
 		return nil
 	})
 
+func GetClient() *http.Client {
+	return httpClient.GetClient()
+}
+
 func Request(ctx context.Context) *resty.Request {
 	return httpClient.R().SetContext(ctx)
 }
