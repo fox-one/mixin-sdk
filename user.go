@@ -33,6 +33,7 @@ func NewUser(userID, sessionID, sessionKey string, pinToken ...string) (*User, e
 	user := User{
 		UserID:     userID,
 		SessionID:  sessionID,
+		SessionKey: sessionKey,
 		privateKey: pri.(*rsa.PrivateKey),
 	}
 
