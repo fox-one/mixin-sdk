@@ -43,6 +43,31 @@ func FetchProfile(ctx context.Context, accessToken string) (*Profile, error) {
 	return fetchProfile(ctx)
 }
 
+func fetchFriends(ctx context.Context) ([]*User, error) {
+	resp, err := Request(ctx).Get("/friends")
+	if err != nil {
+		return nil, err
+	}
+
+	var friends []*User
+	if err := UnmarshalResponse(resp, &friends); err != nil {
+		return nil, err
+	}
+
+	return friends, nil
+}
+func FetchFriends(ctx context.Context, accessToken string) ([]*User, error) {
+	ctx = WithToken(ctx, accessToken)
+
+	return fetchFriends(ctx)
+}
+
+func (ed *EdOToken) FetchFriends(ctx context.Context) ([]*User, error) {
+	ctx = WithAuth(ctx, ed)
+
+	return fetchFriends(ctx)
+}
+
 func UserMe(ctx context.Context, accessToken string) (*Profile, error) {
 	return FetchProfile(ctx, accessToken)
 }
