@@ -33,14 +33,44 @@ func (user *User) FetchProfile(ctx context.Context) (*Profile, error) {
 	return fetchProfile(ctx)
 }
 
+// FetchProfile fetch user profile with edotoken
 func (ed *EdOToken) FetchProfile(ctx context.Context) (*Profile, error) {
 	ctx = WithAuth(ctx, ed)
 	return fetchProfile(ctx)
 }
 
+// FetchProfile fetch user profile with accesstoken
 func FetchProfile(ctx context.Context, accessToken string) (*Profile, error) {
 	ctx = WithToken(ctx, accessToken)
 	return fetchProfile(ctx)
+}
+
+func fetchFriends(ctx context.Context) ([]*User, error) {
+	resp, err := Request(ctx).Get("/friends")
+	if err != nil {
+		return nil, err
+	}
+
+	var friends []*User
+	if err := UnmarshalResponse(resp, &friends); err != nil {
+		return nil, err
+	}
+
+	return friends, nil
+}
+
+// FetchFriends fetch friends with accesstoken
+func FetchFriends(ctx context.Context, accessToken string) ([]*User, error) {
+	ctx = WithToken(ctx, accessToken)
+
+	return fetchFriends(ctx)
+}
+
+// FetchFriends fetch friends with edo token
+func (ed *EdOToken) FetchFriends(ctx context.Context) ([]*User, error) {
+	ctx = WithAuth(ctx, ed)
+
+	return fetchFriends(ctx)
 }
 
 func UserMe(ctx context.Context, accessToken string) (*Profile, error) {
