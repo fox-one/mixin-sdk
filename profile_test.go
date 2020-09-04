@@ -16,3 +16,11 @@ func TestFetchProfile(t *testing.T) {
 		assert.Lenf(t, profile.UserID, 36, "user id should be uuid")
 	}
 }
+
+func TestSearchUser(t *testing.T) {
+	token := "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJhaWQiOiJiNjlkMTE2NC0yZGMxLTRmN2UtYThlMy1mMjk2ZGMwMTZkODYiLCJleHAiOjE2Mjk0NDAxMjUsImlhdCI6MTU5NzkwNDEyNSwiaXNzIjoiMjgyN2Q4MWYtNmFlMC00ODQyLWI5MmYtNjU3NmFmZTM2ODYzIiwic2NwIjoiUEhPTkU6UkVBRCBQUk9GSUxFOlJFQUQgTUVTU0FHRVM6UkVQUkVTRU5UIEFTU0VUUzpSRUFEIn0.VVkev1XsbT4Np8RQ0Z2GSgpVj3d41ErODJl0qRi8V87GGW8Kc98WRVmcYzVUPljs2LyfSgS4fACKUV9K-USyNsMgQEsmLIxnfP089PcUGAaWcNFdO_8n2bfIzOhO9nWs8wN9Cx5t8W7AKX2EyUAH4zLtOG9vKe9Mc3kwDpDw4Zg"
+	user, e := SearchUser(context.Background(), "37261734", token)
+	if assert.Nilf(t, e, "search user success") {
+		assert.NotNil(t, user)
+	}
+}

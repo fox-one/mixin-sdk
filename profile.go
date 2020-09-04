@@ -2,6 +2,7 @@ package mixin
 
 import (
 	"context"
+	"fmt"
 )
 
 type Profile struct {
@@ -45,13 +46,13 @@ func FetchProfile(ctx context.Context, accessToken string) (*Profile, error) {
 	return fetchProfile(ctx)
 }
 
-func fetchFriends(ctx context.Context) ([]*User, error) {
+func fetchFriends(ctx context.Context) ([]*Profile, error) {
 	resp, err := Request(ctx).Get("/friends")
 	if err != nil {
 		return nil, err
 	}
 
-	var friends []*User
+	var friends []*Profile
 	if err := UnmarshalResponse(resp, &friends); err != nil {
 		return nil, err
 	}
@@ -60,19 +61,48 @@ func fetchFriends(ctx context.Context) ([]*User, error) {
 }
 
 // FetchFriends fetch friends with accesstoken
-func FetchFriends(ctx context.Context, accessToken string) ([]*User, error) {
+func FetchFriends(ctx context.Context, accessToken string) ([]*Profile, error) {
 	ctx = WithToken(ctx, accessToken)
 
 	return fetchFriends(ctx)
 }
 
 // FetchFriends fetch friends with edo token
-func (ed *EdOToken) FetchFriends(ctx context.Context) ([]*User, error) {
+func (ed *EdOToken) FetchFriends(ctx context.Context) ([]*Profile, error) {
 	ctx = WithAuth(ctx, ed)
 
 	return fetchFriends(ctx)
 }
 
+func searchUser(ctx context.Context, q string) (*Profile, error) {
+	resp, err := Request(ctx).Get(fmt.Sprintf("/search/%s", q))
+	if err != nil {
+		return nil, err
+	}
+
+	var profile Profile
+	if err := UnmarshalResponse(resp, &profile); err != nil {
+		return nil, err
+	}
+
+	return &profile, nil
+}
+
+// SearchUser search mixin user by access token
+func SearchUser(ctx context.Context, q string, accessToken string) (*Profile, error) {
+	ctx = WithToken(ctx, accessToken)
+
+	return searchUser(ctx, q)
+}
+
+// SearchUser search mixin user by edo token
+func (ed *EdOToken) SearchUser(ctx context.Context, q string) (*Profile, error) {
+	ctx = WithAuth(ctx, ed)
+
+	return searchUser(ctx, q)
+}
+
+// UserMe my profile
 func UserMe(ctx context.Context, accessToken string) (*Profile, error) {
 	return FetchProfile(ctx, accessToken)
 }
