@@ -54,8 +54,6 @@ func (user *User) SendMessages(ctx context.Context, messages []*MessageRequest) 
 	switch len(messages) {
 	case 0:
 		return nil
-	case 1:
-		return user.SendMessage(ctx, messages[0])
 	default:
 		return user.Request(ctx, "POST", "/messages", messages, nil)
 	}
