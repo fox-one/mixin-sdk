@@ -45,6 +45,11 @@ type TransferInput struct {
 	TraceID     string `json:"trace_id,omitempty"`
 	Memo        string `json:"memo,omitempty"`
 	OpponentKey string `json:"opponent_key,omitempty"`
+
+	OpponentMultisig struct {
+		Receivers []string `json:"receivers,omitempty"`
+		Threshold uint8    `json:"threshold,omitempty"`
+	} `json:"opponent_multisig,omitempty"`
 }
 
 // Transfer transfer to account

@@ -38,11 +38,19 @@ func (user *User) Transaction(ctx context.Context, in *TransferInput, pin string
 	}
 
 	paras := map[string]interface{}{
-		"asset_id":     in.AssetID,
-		"opponent_key": in.OpponentKey,
-		"amount":       in.Amount,
-		"trace_id":     in.TraceID,
-		"memo":         in.Memo,
+		"asset_id": in.AssetID,
+		"amount":   in.Amount,
+		"trace_id": in.TraceID,
+		"memo":     in.Memo,
+	}
+
+	if in.OpponentKey != "" {
+		paras["opponent_key"] = in.OpponentKey
+	} else {
+		paras["opponent_multisig"] = map[string]interface{}{
+			"receivers": in.OpponentMultisig.Receivers,
+			"threshold": in.OpponentMultisig.Threshold,
+		}
 	}
 
 	var resp RawTransaction
