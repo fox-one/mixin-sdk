@@ -66,8 +66,12 @@ func (user *User) MakeTransactionOutput(ctx context.Context, userIDs ...string) 
 		userIDs = []string{user.UserID}
 	}
 
+	input := map[string]interface{}{
+		"receivers": userIDs,
+	}
+
 	var resp TransactionOutput
-	if err := user.Request(ctx, "POST", "/outputs", userIDs, &resp); err != nil {
+	if err := user.Request(ctx, "POST", "/outputs", input, &resp); err != nil {
 		return nil, err
 	}
 	return &resp, nil
