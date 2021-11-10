@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	blazeHostURL = "wss://mixin-blaze.zeromesh.net/"
+	blazeHostURL = "wss://blaze.mixin.one/"
 )
 
 func init() {
