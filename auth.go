@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-resty/resty/v2"
+	"github.com/golang-jwt/jwt"
 )
 
 type Authentication interface {
